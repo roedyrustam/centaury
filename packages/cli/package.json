@@ -1,0 +1,16 @@
+{
+  "name": "@centaury/cli",
+  "version": "1.0.0-alpha",
+  "description": "Developer CLI for Centaury Framework",
+  "main": "src/index.ts",
+  "bin": {
+    "centaury": "./bin/centaury.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@centaury/core": "workspace:*"
+  }
+}

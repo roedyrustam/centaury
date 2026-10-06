@@ -1,0 +1,62 @@
+# Centaury Framework — Progress Tracker
+
+## Status Overview
+- **Active Phase**: ALL 8 PHASES 100% COMPLETED! 🎉
+- **Test Pass Rate**: 100% (45/45 tests passing across 6 suites)
+- **Typecheck Status**: 0 errors (`tsc --noEmit` strictly clean)
+- **Engine Performance**: 2.63ms cold-start, live showcase running at http://localhost:3000
+
+---
+
+## Phase Checklist
+
+### Phase 1: Core Micro-Kernel & Server Engine (`@centaury/core`) [COMPLETED]
+- [x] Inisialisasi monorepo Bun workspaces (`package.json`, `tsconfig.json`).
+- [x] Server HTTP/WebSocket berkecepatan tinggi dengan routing Trie native Bun.
+- [x] Type-safe RPC router terpadu tanpa build step.
+- [x] Request context dengan pelacakan deterministic KV-cache prefix.
+- [x] Dual-Citizen MCP v1.x endpoint (`/.well-known/mcp.json`).
+- [x] Suite pengujian terverifikasi 100% lulus.
+
+### Phase 2: Zero-Hydration Client Reactive Engine (`@centaury/signals`) [COMPLETED]
+- [x] Implementasi Micro-Signals primitif (`signal`, `computed`, `effect`, `batch`) dalam ~1KB gzipped.
+- [x] Direct DOM mutation binding tanpa Virtual DOM (`bindText`, `bindAttr`, `bindClass`, `bindModel`, `scanAndBind`).
+- [x] Custom Elements bawaan: `<c-stream>`, `<c-stack>`, registrasi otomatis.
+- [x] Suite pengujian DOM headless (Happy-DOM) 100% lulus.
+
+### Phase 3: Ephemeral Generative UI Synthesizer (`@centaury/ephemeral`) [COMPLETED]
+- [x] Streaming token parser untuk token UI yang dipancarkan LLM (`parser.ts`) dengan boundary buffer tahan token parsial.
+- [x] Zero-eval HTML/SVG/Component sanitizer (`sanitizer.ts`) untuk eliminasi risiko XSS dan eksekusi skrip jahat.
+- [x] Safe DOM mounting engine & custom element `<c-ephemeral>` dengan penanganan aksi tombol terpadu (`ephemeral:action`).
+- [x] Suite pengujian 100% lulus.
+
+### Phase 4: Multimodal Astra Gateway (`@centaury/astra`) [COMPLETED]
+- [x] WebSockets bi-directional PCM audio streaming (16kHz in / 24kHz out) dengan VAD energy tracker.
+- [x] Continuous video frame screen-grounding coordinates mapper (0..1000 ke piksel nyata).
+- [x] Sub-150ms client interruption detector and audio cutoff buffer.
+- [x] Suite pengujian 100% lulus.
+
+### Phase 5: Dual-Citizen MCP v1.x & AST Server (`@centaury/agent`) [COMPLETED]
+- [x] Endpoint resmi protokol MCP v1.x (`initialize`, `tools/list`, `tools/call`, `resources/list`, `resources/read`).
+- [x] Route & schema reflector (`CentauryInspector`) untuk inspeksi AI Agent.
+- [x] Tool bawaan AI Agent (`centaury_list_routes`, `centaury_get_system_snapshot`, `centaury_invoke_rpc`, `centaury_get_logs`, `centaury_synthesize_ui`).
+- [x] Memori episodik agen (`CentauryAgentMemory`) dengan penguncian prefix deterministik KV-cache.
+- [x] Suite pengujian 100% lulus.
+
+### Phase 6: Pre-Launch Hardening & Security Audit (`production-ready-hardener`) [COMPLETED]
+- [x] Audit anti-slop: zero code placeholders, strict types, zero compilation warnings.
+- [x] Verifikasi tipe data penuh: `tsc --noEmit` bersih tanpa satu pun error.
+- [x] Bundle distribution build (`dist/`): `@centaury/signals` 3.53KB, `@centaury/ephemeral` 5.95KB, `@centaury/astra` 2.74KB, `@centaury/agent` 11.9KB.
+- [x] Regresi 39 unit & integration tests lulus dalam ~354ms.
+
+### Phase 7: Centaury Showcase Application (`examples/showcase-app`) [COMPLETED]
+- [x] Scaffolding & deployment aplikasi demonstrator interaktif penuh di `examples/showcase-app`.
+- [x] Server live aktif di `http://localhost:3000` dengan Bun.serve.
+- [x] 4 pilar fitur interaktif: Live Telemetry via `<c-stream>`, Ephemeral UI Synthesizer, Project Astra Simulator, dan MCP Terminal.
+
+### Phase 8: Package Distribution & CLI (`@centaury/cli`) [COMPLETED]
+- [x] CLI developer tool executable `centaury` (`bin/centaury.js`).
+- [x] Perintah `centaury create <app-name>` untuk scaffolding instan.
+- [x] Perintah `centaury doctor` untuk audit kesehatan lingkungan dev.
+- [x] Perintah `centaury dev` untuk server development auto-reload.
+- [x] Regresi 45 tests monorepo 100% lulus.

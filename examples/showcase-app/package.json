@@ -1,0 +1,17 @@
+{
+  "name": "centaury-showcase-app",
+  "version": "1.0.0-alpha",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run server.ts"
+  },
+  "dependencies": {
+    "@centaury/core": "workspace:*",
+    "@centaury/signals": "workspace:*",
+    "@centaury/ephemeral": "workspace:*",
+    "@centaury/astra": "workspace:*",
+    "@centaury/agent": "workspace:*",
+    "zod": "^3.24.2"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "centaury-monorepo",
+  "version": "1.0.0-alpha",
+  "private": true,
+  "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "scripts": {
+    "dev": "bun run --cwd examples/showcase-app dev",
+    "build": "bun run --filter \"*\" build",
+    "test": "bun test"
+  },
+  "keywords": [
+    "centaury",
+    "framework",
+    "fullstack",
+    "gemini",
+    "project-astra",
+    "super-intelligence",
+    "mcp",
+    "bun"
+  ],
+  "author": "Antigravity & Roedy Rustam",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.8.2",
+    "happy-dom": "^17.1.8",
+    "zod": "^3.24.2"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "centaury-monorepo",
+      "devDependencies": {
+        "@types/bun": "latest",
+        "happy-dom": "^17.1.8",
+        "typescript": "^5.8.2",
+        "zod": "^3.24.2",
+      },
+    },
+    "examples/showcase-app": {
+      "name": "centaury-showcase-app",
+      "version": "1.0.0-alpha",
+      "dependencies": {
+        "@centaury/agent": "workspace:*",
+        "@centaury/astra": "workspace:*",
+        "@centaury/core": "workspace:*",
+        "@centaury/ephemeral": "workspace:*",
+        "@centaury/signals": "workspace:*",
+        "zod": "^3.24.2",
+      },
+    },
+    "packages/agent": {
+      "name": "@centaury/agent",
+      "version": "1.0.0-alpha",
+      "dependencies": {
+        "@centaury/core": "workspace:*",
+      },
+    },
+    "packages/astra": {
+      "name": "@centaury/astra",
+      "version": "1.0.0-alpha",
+      "dependencies": {
+        "@centaury/core": "workspace:*",
+      },
+      "devDependencies": {
+        "happy-dom": "^17.1.8",
+      },
+    },
+    "packages/core": {
+      "name": "@centaury/core",
+      "version": "1.0.0-alpha",
+      "dependencies": {
+        "zod": "^3.24.2",
+      },
+      "peerDependencies": {
+        "typescript": "^5.8.0",
+      },
+    },
+    "packages/ephemeral": {
+      "name": "@centaury/ephemeral",
+      "version": "1.0.0-alpha",
+      "dependencies": {
+        "@centaury/signals": "workspace:*",
+      },
+      "devDependencies": {
+        "happy-dom": "^17.1.8",
+      },
+    },
+    "packages/signals": {
+      "name": "@centaury/signals",
+      "version": "1.0.0-alpha",
+      "devDependencies": {
+        "happy-dom": "^17.1.8",
+      },
+    },
+  },
+  "packages": {
+    "@centaury/agent": ["@centaury/agent@workspace:packages/agent"],
+
+    "@centaury/astra": ["@centaury/astra@workspace:packages/astra"],
+
+    "@centaury/core": ["@centaury/core@workspace:packages/core"],
+
+    "@centaury/ephemeral": ["@centaury/ephemeral@workspace:packages/ephemeral"],
+
+    "@centaury/signals": ["@centaury/signals@workspace:packages/signals"],
+
+    "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
+
+    "@types/node": ["@types/node@26.6.4", "", { "dependencies": { "undici-types": "~8.9.0" } }, "sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg=="],
+
+    "bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
+
+    "centaury-showcase-app": ["centaury-showcase-app@workspace:examples/showcase-app"],
+
+    "happy-dom": ["happy-dom@17.6.3", "", { "dependencies": { "webidl-conversions": "^7.0.0", "whatwg-mimetype": "^3.0.0" } }, "sha512-UVIHeVhxmxedbWPCfgS55Jg2rDfwf2BCKeylcPSqazLz5w3Kri7Q4xdBJubsr/+VUzFLh0VjIvh13RaDA2/Xug=="],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "undici-types": ["undici-types@8.9.0", "", {}, "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="],
+
+    "webidl-conversions": ["webidl-conversions@7.0.0", "", {}, "sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g=="],
+
+    "whatwg-mimetype": ["whatwg-mimetype@3.0.0", "", {}, "sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q=="],
+
+    "zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
+  }
+}

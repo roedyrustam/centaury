@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centaury Framework — The Autonomous Fullstack Engine for Super-Intelligent Systems</title>
+  <link rel="stylesheet" href="/app.css">
+  <link rel="icon" type="image/jpeg" href="/logo.jpg">
+  <!-- Load Centaury Zero-Hydration Client Bundles -->
+  <script type="module" src="/@centaury/signals.js"></script>
+  <script type="module" src="/@centaury/ephemeral.js"></script>
+</head>
+<body>
+
+  <!-- Top Glassmorphism Navigation -->
+  <header class="navbar">
+    <div class="brand">
+      <img src="/logo.jpg" class="brand-logo" alt="Centaury Quantum Nexus Logo">
+      <div>
+        <div class="brand-title">CENTAURY</div>
+        <div class="brand-tag">Super-Intelligent Fullstack Engine</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <div class="status-badge">
+        <span class="pulse-dot"></span>
+        <span>GEMINI 4 PRO: 32K BUDGET</span>
+      </div>
+      <a href="/.well-known/mcp.json" target="_blank" class="tag-badge" style="text-decoration: none;">
+        MCP v1.x ACTIVE ↗
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+    
+    <!-- Hero Section -->
+    <section class="hero">
+      <h1>The Dual-Citizen Autonomous Framework</h1>
+      <p>
+        Dibangun di atas <strong>Bun 1.3+</strong>, <strong>Zero-Hydration Micro-Signals</strong>, dan <strong>Project Astra Multimodal Streaming</strong>. Di mana AI Agent dan manusia berkarya bersama dalam satu runtime terpadu.
+      </p>
+    </section>
+
+    <!-- 4-Pillar Interactive Dashboard Grid -->
+    <div class="dashboard-grid">
+
+      <!-- Column 1: Zero-Hydration Telemetry Stream -->
+      <section class="glass-card" id="card-telemetry">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Live Engine Telemetry
+          </h2>
+          <span class="tag-badge">c-stream WS</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Diperbarui secara real-time via WebSocket bi-directional tanpa re-render VDOM.
+        </p>
+
+        <!-- Centaury Zero-Hydration Stream Element -->
+        <c-stream url="/api/live" topic="telemetry" id="telemetry-bus">
+          <div class="telemetry-row">
+            <div class="metric-box">
+              <div class="metric-label">Memory Footprint</div>
+              <div class="metric-val"><span data-bind="memoryRssMb">18</span> MB</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Heap In-Use</div>
+              <div class="metric-val"><span data-bind="heapUsedMb">9</span> MB</div>
+            </div>
+          </div>
+          <div class="telemetry-row">
+            <div class="metric-box">
+              <div class="metric-label">Throughput</div>
+              <div class="metric-val"><span data-bind="activeReqPerSec">1,480</span> <small style="font-size: 0.8rem;">req/s</small></div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">CPU Load</div>
+              <div class="metric-val" data-bind="cpuLoad">1.4%</div>
+            </div>
+          </div>
+        </c-stream>
+
+        <button class="btn btn-secondary" style="width: 100%;" id="btn-fetch-rpc">
+          ⚡ Call RPC: system.getMetrics
+        </button>
+      </section>
+
+      <!-- Column 2: Ephemeral Generative UI Synthesizer -->
+      <section class="glass-card" id="card-ephemeral">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Ephemeral Generative UI
+          </h2>
+          <span class="tag-badge" style="background: rgba(6, 182, 212, 0.15); color: #38bdf8; border-color: var(--border-cyan);">Zero-Eval AST</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Sintesis antarmuka on-the-fly dari token reasoning model tanpa risiko XSS.
+        </p>
+
+        <!-- Ephemeral Component Target Container -->
+        <div class="ephemeral-viewport">
+          <c-ephemeral id="ephemeral-target">
+            <ui-card elevation="glass">
+              <ui-header title="Standby Workspace" badge="ready" />
+              <p style="color: #94a3b8; font-size: 0.9rem;">
+                Pilih salah satu tombol di bawah untuk meminta Gemini 4 Pro menyintesis komponen UI streaming.
+              </p>
+            </ui-card>
+          </c-ephemeral>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" id="btn-gen-defense">
+            🛡️ Cognitive Defense UI
+          </button>
+          <button class="btn" id="btn-gen-swarm">
+            🤖 Agent Swarm UI
+          </button>
+          <button class="btn btn-secondary" id="btn-clear-ephemeral">
+            Clear UI
+          </button>
+        </div>
+      </section>
+
+      <!-- Column 3: Project Astra Multimodal Vision & Audio -->
+      <section class="glass-card" id="card-astra" style="position: relative;">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Project Astra Gateway
+          </h2>
+          <span class="tag-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">Latensi &lt;150ms</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Aliran audio PCM dua arah, deteksi interupsi instan, dan screen-grounding.
+        </p>
+
+        <div style="background: rgba(0,0,0,0.5); border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.06);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; font-family: var(--font-mono);">
+            <span>VAD Speech Energy Meter</span>
+            <span id="energy-reading" style="color: #38bdf8;">0.000 RMS</span>
+          </div>
+          <div style="height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden;">
+            <div id="vad-progress-bar" style="width: 5%; height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); transition: width 0.1s ease;"></div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" id="btn-simulate-grounding">
+            🎯 Screen-Grounding Simulation
+          </button>
+          <button class="btn btn-secondary" id="btn-simulate-interruption">
+            🛑 Trigger Interruption (&lt;150ms)
+          </button>
+        </div>
+      </section>
+
+      <!-- Column 4: Dual-Citizen MCP Inspector -->
+      <section class="glass-card" id="card-mcp">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            Dual-Citizen MCP v1.x Terminal
+          </h2>
+          <span class="tag-badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">Agent Shell</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Live log ring-buffer & event stream inspeksi AI Agent secara real-time.
+        </p>
+
+        <!-- Live Terminal Stream Output -->
+        <div class="console-window" id="console-stream">
+          <div class="console-line success">✓ Centaury Engine 1.0.0-alpha online (Bun 1.3.14)</div>
+          <div class="console-line agent">[MCP] Dual-Citizen Protocol initialized (version: 2024-11-05)</div>
+          <div class="console-line event">[WS] Connected to Unified Realtime Stream at /api/live</div>
+        </div>
+
+        <div class="btn-group" style="margin-top: 1rem;">
+          <button class="btn btn-secondary" id="btn-inspect-routes" style="font-size: 0.8rem;">
+            Inspect Routes
+          </button>
+          <button class="btn btn-secondary" id="btn-clear-console" style="font-size: 0.8rem;">
+            Clear Logs
+          </button>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Screen Grounding Visual Overlay Container -->
+  <div id="grounding-overlay-host" class="astra-overlay-canvas"></div>
+
+  <!-- Footer -->
+  <footer>
+    Centaury Framework © 2026. Built with Pride for Google Gemini 4 Pro & Project Astra. Powered by Bun & TypeScript.
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
