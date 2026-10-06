@@ -15,26 +15,26 @@
       "name": "centaury-showcase-app",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@roedyrustam/agent": "workspace:*",
-        "@roedyrustam/astra": "workspace:*",
-        "@roedyrustam/core": "workspace:*",
-        "@roedyrustam/ephemeral": "workspace:*",
-        "@roedyrustam/signals": "workspace:*",
+        "@centaury-ai/agent": "workspace:*",
+        "@centaury-ai/astra": "workspace:*",
+        "@centaury-ai/core": "workspace:*",
+        "@centaury-ai/ephemeral": "workspace:*",
+        "@centaury-ai/signals": "workspace:*",
         "zod": "^3.24.2",
       },
     },
     "packages/agent": {
-      "name": "@roedyrustam/agent",
+      "name": "@centaury-ai/agent",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@roedyrustam/core": "workspace:*",
+        "@centaury-ai/core": "workspace:*",
       },
     },
     "packages/astra": {
-      "name": "@roedyrustam/astra",
+      "name": "@centaury-ai/astra",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@roedyrustam/core": "workspace:*",
+        "@centaury-ai/core": "workspace:*",
       },
       "devDependencies": {
         "happy-dom": "^17.1.8",
@@ -47,23 +47,23 @@
         "centaury": "./bin/centaury.js",
       },
       "dependencies": {
-        "@roedyrustam/cli": "workspace:*",
-        "@roedyrustam/core": "workspace:*",
-        "@roedyrustam/signals": "workspace:*",
+        "@centaury-ai/cli": "workspace:*",
+        "@centaury-ai/core": "workspace:*",
+        "@centaury-ai/signals": "workspace:*",
       },
     },
     "packages/cli": {
-      "name": "@roedyrustam/cli",
+      "name": "@centaury-ai/cli",
       "version": "1.0.0-alpha",
       "bin": {
         "centaury": "./bin/centaury.js",
       },
       "dependencies": {
-        "@roedyrustam/core": "workspace:*",
+        "@centaury-ai/core": "workspace:*",
       },
     },
     "packages/core": {
-      "name": "@roedyrustam/core",
+      "name": "@centaury-ai/core",
       "version": "1.0.0-alpha",
       "dependencies": {
         "zod": "^3.24.2",
@@ -73,17 +73,17 @@
       },
     },
     "packages/ephemeral": {
-      "name": "@roedyrustam/ephemeral",
+      "name": "@centaury-ai/ephemeral",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@roedyrustam/signals": "workspace:*",
+        "@centaury-ai/signals": "workspace:*",
       },
       "devDependencies": {
         "happy-dom": "^17.1.8",
       },
     },
     "packages/signals": {
-      "name": "@roedyrustam/signals",
+      "name": "@centaury-ai/signals",
       "version": "1.0.0-alpha",
       "devDependencies": {
         "happy-dom": "^17.1.8",
@@ -91,17 +91,17 @@
     },
   },
   "packages": {
-    "@roedyrustam/agent": ["@roedyrustam/agent@workspace:packages/agent"],
+    "@centaury-ai/agent": ["@centaury-ai/agent@workspace:packages/agent"],
 
-    "@roedyrustam/astra": ["@roedyrustam/astra@workspace:packages/astra"],
+    "@centaury-ai/astra": ["@centaury-ai/astra@workspace:packages/astra"],
 
-    "@roedyrustam/cli": ["@roedyrustam/cli@workspace:packages/cli"],
+    "@centaury-ai/cli": ["@centaury-ai/cli@workspace:packages/cli"],
 
-    "@roedyrustam/core": ["@roedyrustam/core@workspace:packages/core"],
+    "@centaury-ai/core": ["@centaury-ai/core@workspace:packages/core"],
 
-    "@roedyrustam/ephemeral": ["@roedyrustam/ephemeral@workspace:packages/ephemeral"],
+    "@centaury-ai/ephemeral": ["@centaury-ai/ephemeral@workspace:packages/ephemeral"],
 
-    "@roedyrustam/signals": ["@roedyrustam/signals@workspace:packages/signals"],
+    "@centaury-ai/signals": ["@centaury-ai/signals@workspace:packages/signals"],
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 
