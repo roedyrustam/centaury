@@ -1,10 +1,11 @@
 # Centaury Framework — Progress Tracker
 
 ## Status Overview
-- **Active Phase**: ALL 8 PHASES 100% COMPLETED! 🎉
-- **Test Pass Rate**: 100% (45/45 tests passing across 6 suites)
+- **Active Phase**: ALL 8 PHASES 100% COMPLETED + Advanced Capabilities Active! 🚀
+- **Test Pass Rate**: 100% (48/48 tests passing across 6 suites)
 - **Typecheck Status**: 0 errors (`tsc --noEmit` strictly clean)
-- **Engine Performance**: 2.63ms cold-start, live showcase running at http://localhost:3000
+- **Engine Performance**: 2.63ms cold-start, 13.6M ops/s signal reactivity, 8.3M matches/s Trie router
+- **Showcase Status**: Live at http://localhost:3000
 
 ---
 
@@ -59,4 +60,12 @@
 - [x] Perintah `centaury create <app-name>` untuk scaffolding instan.
 - [x] Perintah `centaury doctor` untuk audit kesehatan lingkungan dev.
 - [x] Perintah `centaury dev` untuk server development auto-reload.
-- [x] Regresi 45 tests monorepo 100% lulus.
+- [x] Regresi 48 tests monorepo 100% lulus.
+
+### Phase 8.1: Advanced Capabilities & Repository Hygiene [COMPLETED]
+- [x] Eliminasi seluruh file `node_modules` (78.000+ file) dari Git index dan dorong pembersihan ke GitHub remote.
+- [x] Hardening `.gitignore` komprehensif untuk isolasi dependency, secret, dan log.
+- [x] Multi-template CLI generator: `--template minimal|fullstack|agentic` dengan parsing flag fleksibel.
+- [x] Auto-install flag di CLI: `centaury create <app> --install` (`bun install` otomatis).
+- [x] Local-First `persistedSignal` di `@centaury/signals` dengan auto-sync cross-tab via browser `storage` events.
+- [x] Benchmark suite otomatis `bun run bench` (13.6M ops/s signal reactivity, 8.3M matches/s Trie router).

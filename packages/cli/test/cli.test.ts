@@ -51,4 +51,26 @@ describe('@centaury/cli Developer Tools', () => {
     expect(existsSync(join(dummyProject, 'src', 'server.ts'))).toBe(true);
     expect(existsSync(join(dummyProject, 'public', 'index.html'))).toBe(true);
   });
+
+  it('rejects unknown template with code 1', async () => {
+    const code = await runCLI(['create', 'temp-bad-app', '--template', 'non-existent']);
+    expect(code).toBe(1);
+  });
+
+  it('scaffolds an agentic template project correctly', async () => {
+    const agenticProject = join(process.cwd(), 'temp-agentic-app');
+    try {
+      const code = await runCLI(['create', 'temp-agentic-app', '--template', 'agentic']);
+      expect(code).toBe(0);
+      expect(existsSync(join(agenticProject, 'package.json'))).toBe(true);
+      const pkg = JSON.parse(await Bun.file(join(agenticProject, 'package.json')).text());
+      expect(pkg.dependencies['@centaury/agent']).toBeDefined();
+      expect(pkg.dependencies['@centaury/astra']).toBeDefined();
+    } finally {
+      if (existsSync(agenticProject)) {
+        rmSync(agenticProject, { recursive: true, force: true });
+      }
+    }
+  });
 });
+

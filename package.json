@@ -10,7 +10,9 @@
   "scripts": {
     "dev": "bun run --cwd examples/showcase-app dev",
     "build": "bun run --filter \"*\" build",
-    "test": "bun test"
+    "test": "bun test",
+    "bench": "bun run scripts/benchmark.ts",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "centaury",

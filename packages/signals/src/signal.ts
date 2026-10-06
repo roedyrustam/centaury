@@ -134,3 +134,76 @@ export function batch<T>(fn: () => T): T {
     }
   }
 }
+
+export interface PersistOptions<T> {
+  storage?: 'local' | 'session';
+  serialize?: (val: T) => string;
+  deserialize?: (raw: string) => T;
+  syncCrossTab?: boolean;
+}
+
+/**
+ * Create a persistent signal stored in localStorage/sessionStorage with optional cross-tab sync
+ */
+export function persistedSignal<T>(
+  key: string,
+  initialValue: T,
+  options: PersistOptions<T> = {}
+): Signal<T> {
+  const storageType = options.storage || 'local';
+  const serialize = options.serialize || JSON.stringify;
+  const deserialize = options.deserialize || JSON.parse;
+  const syncCrossTab = options.syncCrossTab !== false;
+
+  const getStorage = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return storageType === 'session' ? window.sessionStorage : window.localStorage;
+    } catch {
+      return null;
+    }
+  };
+
+  // 1. Read existing value from storage if present
+  let resolvedInitial = initialValue;
+  const store = getStorage();
+  if (store) {
+    try {
+      const storedItem = store.getItem(key);
+      if (storedItem !== null) {
+        resolvedInitial = deserialize(storedItem);
+      }
+    } catch (e) {
+      console.warn(`[Centaury Signals] Failed to read persisted signal "${key}":`, e);
+    }
+  }
+
+  const sig = new Signal<T>(resolvedInitial);
+
+  // 2. Persist upon changes
+  sig.subscribe((val) => {
+    const s = getStorage();
+    if (!s) return;
+    try {
+      s.setItem(key, serialize(val));
+    } catch (e) {
+      console.warn(`[Centaury Signals] Failed to persist signal "${key}":`, e);
+    }
+  });
+
+  // 3. Multi-tab synchronization via window storage event
+  if (syncCrossTab && typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('storage', (event: StorageEvent) => {
+      if (event.key === key && event.newValue !== null) {
+        try {
+          const newVal = deserialize(event.newValue);
+          sig.set(newVal);
+        } catch (e) {
+          console.warn(`[Centaury Signals] Failed to sync cross-tab storage for "${key}":`, e);
+        }
+      }
+    });
+  }
+
+  return sig;
+}

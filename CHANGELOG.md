@@ -6,11 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0-alpha] - 2026-10-07
 
 ### Added
+- **Multi-Template Scaffolding & Auto-Install (`@centaury/cli`)**:
+  - Added `--template` option supporting `minimal` (<1.5KB), `fullstack` (default), and `agentic` (MCP + Ephemeral UI + Astra gateway) archetypes.
+  - Added `--install, -i` flag to automatically execute `bun install` immediately after project scaffolding.
+  - Added unit test suite covering template flags and invalid template validation.
+- **Local-First Cross-Tab Persistent Signals (`@centaury/signals`)**:
+  - Implemented `persistedSignal(key, initialValue, options)` with automatic serialization, `localStorage`/`sessionStorage` synchronization.
+  - Real-time multi-tab state propagation listening to native browser `storage` events.
+  - Zero server overhead for local offline persistence.
+- **Micro-Benchmark Suite (`scripts/benchmark.ts`)**:
+  - Automated performance validation executing `bun run bench`.
+  - Micro-Signals Reactivity: **13,660,000+ ops/sec** (100k updates in ~6ms).
+  - Ephemeral UI AST Parser: **205,000+ parses/sec** (10k cycles in ~48ms).
+  - Trie Router Match Throughput: **8,310,000+ matches/sec** (500k matches in ~60ms).
+- **Repository Cleanliness & GitHub Optimization**:
+  - Untracked 78,000+ inadvertent `node_modules` files from Git index and pushed clean state to GitHub.
+  - Hardened `.gitignore` to strictly exclude all root and nested dependencies, build artifacts, environment secrets, and system logs.
 - **Developer CLI (`@centaury/cli`)**:
   - Binary executable `centaury` providing `create`, `dev`, and `doctor` commands.
   - Automatic project scaffolding template with pre-configured TypeScript, Bun server, and HTML frontend.
   - Diagnostic environment doctor checking Bun runtime, memory headroom, and MCP compatibility.
-  - Full CLI test suite (45 tests passing across monorepo in 323ms).
+  - Full CLI test suite (48 tests passing across monorepo in 434ms).
 - **Showcase Application (`examples/showcase-app`)**:
   - Live fullstack demonstrator running at `http://localhost:3000`.
   - Obsidian dark cybernetic theme with glassmorphism, glowing electric cyan/violet gradients, and official Centaury branding logo.

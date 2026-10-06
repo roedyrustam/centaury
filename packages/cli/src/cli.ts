@@ -6,6 +6,13 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
+export type TemplateType = 'minimal' | 'fullstack' | 'agentic';
+
+export interface CreateOptions {
+  template: TemplateType;
+  install: boolean;
+}
+
 export async function runCLI(args: string[]): Promise<number> {
   const command = args[0] || '--help';
 
@@ -25,11 +32,31 @@ export async function runCLI(args: string[]): Promise<number> {
 
     case 'create': {
       const projectName = args[1];
-      if (!projectName) {
+      if (!projectName || projectName.startsWith('-')) {
         console.error('\x1b[31mError: Please specify a project name.\x1b[0m Example: centaury create my-app');
         return 1;
       }
-      return scaffoldProject(projectName);
+
+      // Parse flags
+      let template: TemplateType = 'fullstack';
+      let install = false;
+
+      for (let i = 2; i < args.length; i++) {
+        if (args[i] === '--template' && args[i + 1]) {
+          const t = args[i + 1].toLowerCase() as TemplateType;
+          if (['minimal', 'fullstack', 'agentic'].includes(t)) {
+            template = t;
+            i++;
+          } else {
+            console.error(`\x1b[31mError: Unknown template '${args[i + 1]}'. Choose from: minimal, fullstack, agentic\x1b[0m`);
+            return 1;
+          }
+        } else if (args[i] === '--install' || args[i] === '-i') {
+          install = true;
+        }
+      }
+
+      return await scaffoldProject(projectName, { template, install });
     }
 
     case 'dev': {
@@ -57,11 +84,18 @@ function printHelp(): void {
   centaury <command> [options]
 
 \x1b[33mCOMMANDS:\x1b[0m
-  \x1b[32mcreate <name>\x1b[0m    Scaffold a new fullstack Centaury project
-  \x1b[32mdev\x1b[0m              Start the local development server with auto-reload
-  \x1b[32mdoctor\x1b[0m           Audit local runtime health, Bun, and port availability
-  \x1b[32m--version, -v\x1b[0m    Show Centaury version
-  \x1b[32m--help, -h\x1b[0m       Display this guide
+  \x1b[32mcreate <name> [flags]\x1b[0m   Scaffold a new Centaury application
+  \x1b[32mdev\x1b[0m                     Start the local development server with auto-reload
+  \x1b[32mdoctor\x1b[0m                  Audit local runtime health, Bun, and port availability
+  \x1b[32m--version, -v\x1b[0m           Show Centaury version
+  \x1b[32m--help, -h\x1b[0m              Display this guide
+
+\x1b[33mCREATE FLAGS:\x1b[0m
+  \x1b[36m--template <name>\x1b[0m       Template archetype:
+                           • \x1b[32mminimal\x1b[0m   : Ultra-lightweight Micro-Signals + Bun Trie server (<1.5KB)
+                           • \x1b[32mfullstack\x1b[0m : RPC procedures + Reactive UI + Web Components (Default)
+                           • \x1b[32magentic\x1b[0m   : Dual-Citizen MCP v1.x + Ephemeral UI + Astra Multimodal
+  \x1b[36m--install, -i\x1b[0m           Automatically run bun install after project scaffolding
 
 \x1b[33mDOCUMENTATION:\x1b[0m
   https://centaury.dev/docs
@@ -94,7 +128,7 @@ function runDoctor(): number {
   return 0;
 }
 
-function scaffoldProject(projectName: string): number {
+async function scaffoldProject(projectName: string, options: CreateOptions): Promise<number> {
   const targetDir = join(process.cwd(), projectName);
 
   if (existsSync(targetDir)) {
@@ -102,12 +136,26 @@ function scaffoldProject(projectName: string): number {
     return 1;
   }
 
-  console.log(`\n🌌 Scaffolding new Centaury application into: \x1b[36m${targetDir}\x1b[0m...`);
+  console.log(`\n🌌 Scaffolding new Centaury [\x1b[35m${options.template.toUpperCase()}\x1b[0m] application into: \x1b[36m${targetDir}\x1b[0m...`);
 
   mkdirSync(join(targetDir, 'src'), { recursive: true });
   mkdirSync(join(targetDir, 'public'), { recursive: true });
 
   // 1. package.json
+  const dependencies: Record<string, string> = {
+    '@centaury/core': '^1.0.0-alpha',
+    '@centaury/signals': '^1.0.0-alpha',
+    zod: '^3.24.2',
+  };
+
+  if (options.template === 'fullstack' || options.template === 'agentic') {
+    dependencies['@centaury/ephemeral'] = '^1.0.0-alpha';
+  }
+  if (options.template === 'agentic') {
+    dependencies['@centaury/astra'] = '^1.0.0-alpha';
+    dependencies['@centaury/agent'] = '^1.0.0-alpha';
+  }
+
   const pkgJson = {
     name: projectName,
     version: '1.0.0',
@@ -116,14 +164,7 @@ function scaffoldProject(projectName: string): number {
       dev: 'centaury dev',
       start: 'bun run src/server.ts',
     },
-    dependencies: {
-      '@centaury/core': '^1.0.0-alpha',
-      '@centaury/signals': '^1.0.0-alpha',
-      '@centaury/ephemeral': '^1.0.0-alpha',
-      '@centaury/astra': '^1.0.0-alpha',
-      '@centaury/agent': '^1.0.0-alpha',
-      zod: '^3.24.2',
-    },
+    dependencies,
   };
   writeFileSync(join(targetDir, 'package.json'), JSON.stringify(pkgJson, null, 2));
 
@@ -142,7 +183,69 @@ function scaffoldProject(projectName: string): number {
   writeFileSync(join(targetDir, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2));
 
   // 3. src/server.ts
-  const serverCode = `import { CentauryServer } from '@centaury/core';
+  let serverCode = '';
+  if (options.template === 'minimal') {
+    serverCode = `import { CentauryServer } from '@centaury/core';
+import { join } from 'path';
+
+const app = new CentauryServer({ port: 3000 });
+
+app.get('/', async () => {
+  const file = Bun.file(join(import.meta.dir, '../public/index.html'));
+  return new Response(file, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+});
+
+app.rpc('ping', {
+  handler: () => ({ pong: true, time: new Date().toISOString() }),
+});
+
+app.listen();
+console.log('🌌 Centaury minimal server running at http://localhost:3000');
+`;
+  } else if (options.template === 'agentic') {
+    serverCode = `import { CentauryServer } from '@centaury/core';
+import { CentauryMCPServer } from '@centaury/agent';
+import { z } from 'zod';
+import { join } from 'path';
+
+const app = new CentauryServer({
+  port: 3000,
+  ai: {
+    model: 'gemini-4-pro',
+    thinkingBudget: 16384,
+  },
+});
+
+const mcp = new CentauryMCPServer(app);
+
+app.get('/', async () => {
+  const file = Bun.file(join(import.meta.dir, '../public/index.html'));
+  return new Response(file, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+});
+
+// Dual-Citizen MCP Endpoint
+app.post('/mcp', async (req) => {
+  const body = await req.json();
+  const res = await mcp.handleRequest(body);
+  return Response.json(res);
+});
+
+app.rpc('analyzeAgentState', {
+  input: z.object({ query: z.string() }),
+  handler: (input) => ({
+    status: 'optimal',
+    query: input.query,
+    timestamp: Date.now(),
+  }),
+});
+
+app.listen();
+console.log('🌌 Centaury Agentic Server running at http://localhost:3000');
+console.log('🤖 MCP Endpoint active at http://localhost:3000/mcp');
+`;
+  } else {
+    // fullstack default
+    serverCode = `import { CentauryServer } from '@centaury/core';
 import { z } from 'zod';
 import { join } from 'path';
 
@@ -159,13 +262,19 @@ app.get('/', async () => {
   return new Response(file, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 });
 
-app.rpc('ping', {
-  handler: () => ({ pong: true, timestamp: Date.now() }),
+app.rpc('systemMetrics', {
+  handler: () => ({
+    status: 'healthy',
+    uptime: process.uptime(),
+    memory: process.memoryUsage().rss,
+    timestamp: Date.now(),
+  }),
 });
 
 app.listen();
-console.log('🌌 Centaury server running at http://localhost:3000');
+console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
 `;
+  }
   writeFileSync(join(targetDir, 'src/server.ts'), serverCode);
 
   // 4. public/index.html
@@ -173,27 +282,104 @@ console.log('🌌 Centaury server running at http://localhost:3000');
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>${projectName} — Centaury App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${projectName} — Centaury App (${options.template})</title>
   <style>
-    body { background: #050711; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    .card { background: rgba(13, 20, 39, 0.8); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; padding: 2rem; text-align: center; }
-    h1 { color: #38bdf8; margin-top: 0; }
+    :root {
+      --bg: #030712;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --border: rgba(56, 189, 248, 0.25);
+      --primary: #38bdf8;
+      --accent: #818cf8;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 50% 10%, #0c1838, var(--bg));
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 520px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 0.5rem;
+      background: linear-gradient(135deg, #fff, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p { color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .btn {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+      transition: transform 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Welcome to ${projectName}</h1>
-    <p>Powered by <strong>Centaury Framework</strong> & Google Gemini 4 Pro</p>
+  <div class="container">
+    <div class="badge">${options.template} edition</div>
+    <h1>${projectName}</h1>
+    <p>Constructed with the high-performance <strong>Centaury Framework</strong> for autonomous super-intelligent architectures.</p>
+    <button class="btn" onclick="alert('⚡ Centaury Zero-Hydration event fired!')">Explore Application</button>
   </div>
 </body>
 </html>
 `;
   writeFileSync(join(targetDir, 'public/index.html'), htmlCode);
 
-  console.log(`\x1b[32m✓ Project '${projectName}' scaffolded successfully!\x1b[0m\n`);
-  console.log(`Next steps:`);
+  console.log(`\x1b[32m✓ Project '${projectName}' scaffolded successfully!\x1b[0m`);
+
+  // Optional: run install
+  if (options.install) {
+    console.log(`\n📦 Running 'bun install' in ${projectName}...`);
+    const proc = Bun.spawn(['bun', 'install'], {
+      cwd: targetDir,
+      stdio: ['inherit', 'inherit', 'inherit'],
+    });
+    await proc.exited;
+    console.log(`\x1b[32m✓ Dependencies installed successfully!\x1b[0m`);
+  }
+
+  console.log(`\nNext steps:`);
   console.log(`  cd ${projectName}`);
-  console.log(`  bun install`);
+  if (!options.install) {
+    console.log(`  bun install`);
+  }
   console.log(`  bun run dev\n`);
 
   return 0;

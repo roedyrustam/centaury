@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'bun:test';
 import { Window } from 'happy-dom';
-import { signal, computed, effect, batch } from '../src/signal';
+import { signal, computed, effect, batch, persistedSignal } from '../src/signal';
 import { bindText, bindAttr, bindClass, bindModel, scanAndBind } from '../src/dom';
 
 describe('@centaury/signals Atomic Reactive Engine', () => {
@@ -181,4 +181,35 @@ describe('@centaury/signals Zero-Hydration DOM Bindings', () => {
     statusSig.value = 'Completed in 0.4ms';
     expect(container.querySelector('p')!.textContent).toBe('Completed in 0.4ms');
   });
+
+  it('persists signal values to storage and initializes from storage', () => {
+    const mockStorage: Record<string, string> = {};
+    const originalWindow = (globalThis as any).window;
+
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: (k: string) => mockStorage[k] ?? null,
+        setItem: (k: string, v: string) => {
+          mockStorage[k] = v;
+        },
+      },
+      addEventListener: () => {},
+    };
+
+    try {
+      const authUser = persistedSignal('test_user', { name: 'Anonymous', token: '' });
+      expect(authUser.value.name).toBe('Anonymous');
+
+      authUser.set({ name: 'Roedy', token: 'centaury-jwt-123' });
+      expect(mockStorage['test_user']).toBe(JSON.stringify({ name: 'Roedy', token: 'centaury-jwt-123' }));
+
+      // Reload simulation - should read from mockStorage
+      const reloadedUser = persistedSignal('test_user', { name: 'Default', token: '' });
+      expect(reloadedUser.value.name).toBe('Roedy');
+      expect(reloadedUser.value.token).toBe('centaury-jwt-123');
+    } finally {
+      (globalThis as any).window = originalWindow;
+    }
+  });
 });
+
