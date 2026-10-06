@@ -15,7 +15,7 @@ The Centaury team takes security vulnerabilities seriously.
 
 If you believe you have found a security vulnerability in Centaury or any of its subpackages (`@centaury/core`, `@centaury/signals`, `@centaury/ephemeral`, `@centaury/astra`, `@centaury/agent`, `@centaury/cli`), please report it privately:
 
-* **Email**: `roedy.rustam@gmail.com`
+* **Email**: `roedyrustam.id@gmail.com`
 * **GitHub Private Advisory**: You may also report vulnerabilities directly via GitHub's [Security Advisory tab](https://github.com/roedyrustam/centaury/security/advisories/new).
 
 Please do **NOT** report security vulnerabilities through public GitHub issues.
