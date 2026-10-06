@@ -2,7 +2,7 @@
   "name": "centaury-monorepo",
   "version": "1.0.0-alpha",
   "private": true,
-  "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems",
+  "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems (Gemini 4 Pro, Project Astra, Dual-Citizen MCP v1.x, Zero-Hydration Signals, Ephemeral UI)",
   "workspaces": [
     "packages/*",
     "examples/*"
@@ -17,14 +17,36 @@
   },
   "keywords": [
     "centaury",
-    "framework",
+    "bun",
+    "bun-framework",
     "fullstack",
+    "ai-framework",
+    "agentic-ai",
     "gemini",
+    "gemini-4-pro",
     "project-astra",
-    "super-intelligence",
     "mcp",
-    "bun"
+    "model-context-protocol",
+    "mcp-server",
+    "zero-hydration",
+    "signals",
+    "micro-signals",
+    "ephemeral-ui",
+    "generative-ui",
+    "high-performance",
+    "trie-router",
+    "rpc",
+    "websockets",
+    "realtime"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/roedyrustam/centaury.git"
+  },
+  "homepage": "https://github.com/roedyrustam/centaury#readme",
+  "bugs": {
+    "url": "https://github.com/roedyrustam/centaury/issues"
+  },
   "author": "Antigravity & Roedy Rustam",
   "license": "MIT",
   "devDependencies": {
