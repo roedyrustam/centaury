@@ -87,3 +87,13 @@
 - [x] Script verifikasi end-to-end rilis `bun run release:check` (`scripts/e2e-release-test.ts`) menguji siklus hidup lengkap (scaffolding, server boot, HTML UI, RPC call, MCP introspection) dengan 100% sukses.
 - [x] Seluruh unit/integration test (51/51), typecheck (`tsc --noEmit`), dan micro-benchmarks siap rilis.
 
+### Phase 9: Native SSE Event Bus (`@centaury-ai/sse`) [COMPLETED]
+- [x] Paket baru `@centaury-ai/sse` dengan arsitektur lengkap (4 modul: `event-bus`, `sse-handler`, `sse-plugin`, `client`).
+- [x] `CentauryEventBus` — O(1) topic lookup, wildcard `'*'` subscription, per-topic ring-buffer history (late-join replay).
+- [x] `formatSseEvent()` — formatter RFC 8895 compliant dengan multi-line data prefix, retry directive.
+- [x] `createSseResponse()` — native Bun `ReadableStream` SSE dengan heartbeat, auto-cleanup pada disconnect.
+- [x] `ssePlugin()` — plugin Centaury yang mengekspos `GET /sse/:topic`, `GET /sse`, `GET /sse/_stats`.
+- [x] `CentaurySSEClient` — browser client dengan exponential back-off auto-reconnect, named event types, typed deserialization.
+- [x] Diintegrasikan ke monorepo: build pipeline, umbrella re-exports, `tsconfig.json` paths mapping.
+- [x] 22 unit/integration tests baru lulus (total monorepo: **73/73 pass**), typecheck `tsc --noEmit` **0 errors**.
+
