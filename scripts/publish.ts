@@ -23,6 +23,18 @@ const packagesToPublish: PackagePublishTarget[] = [
 
 const isDryRun = process.argv.includes('--dry-run');
 
+// Extract --otp from command line arguments if provided
+let currentOtp: string | null = null;
+const otpArg = process.argv.find((a) => a.startsWith('--otp='));
+if (otpArg) {
+  currentOtp = otpArg.split('=')[1].trim();
+} else {
+  const otpIdx = process.argv.indexOf('--otp');
+  if (otpIdx !== -1 && process.argv[otpIdx + 1]) {
+    currentOtp = process.argv[otpIdx + 1].trim();
+  }
+}
+
 async function execCommand(command: string[], cwd: string): Promise<{ success: boolean; output: string }> {
   const proc = Bun.spawn(command, {
     cwd,
@@ -52,6 +64,15 @@ async function runPublishPipeline() {
   }
   const loggedInUser = whoami.output.split('\n')[0].trim();
   console.log(`  \x1b[32m✓\x1b[0m Logged in as: \x1b[33m${loggedInUser}\x1b[0m`);
+
+  // If live publish and no OTP provided yet, prompt for OTP once upfront
+  if (!isDryRun && !currentOtp) {
+    console.log('\n\x1b[33m[2FA Required]\x1b[0m Akun npm Anda mengaktifkan Two-Factor Authentication (OTP).');
+    const input = prompt('🔑 Masukkan 6-digit kode OTP npm Authenticator Anda: ');
+    if (input && input.trim()) {
+      currentOtp = input.trim();
+    }
+  }
 
   // 2. Run fresh build
   console.log('\n🔨 Step 2: Compiling all packages and type definitions...');
@@ -113,21 +134,42 @@ async function runPublishPipeline() {
       const pkgDir = join(process.cwd(), pkg.dir);
       if (!existsSync(pkgDir)) continue;
 
-      const publishArgs = ['npm', 'publish', '--access', 'public'];
-      if (isDryRun) {
-        publishArgs.push('--dry-run');
-      }
+      let published = false;
+      let attempts = 0;
 
-      console.log(`  📦 Publishing \x1b[33m${pkg.name}\x1b[0m (${pkg.dir})...`);
-      const result = await execCommand(publishArgs, pkgDir);
-
-      if (!result.success) {
-        console.error(`  \x1b[31m✗ Failed to publish ${pkg.name}:\x1b[0m\n${result.output}`);
-        if (!isDryRun) {
-          throw new Error(`Publish failed at ${pkg.name}`);
+      while (!published && attempts < 3) {
+        attempts++;
+        const publishArgs = ['npm', 'publish', '--access', 'public'];
+        if (isDryRun) {
+          publishArgs.push('--dry-run');
         }
-      } else {
-        console.log(`  \x1b[32m✓\x1b[0m \x1b[32mSuccessfully published ${pkg.name}\x1b[0m`);
+        if (currentOtp) {
+          publishArgs.push(`--otp=${currentOtp}`);
+        }
+
+        console.log(`  📦 Publishing \x1b[33m${pkg.name}\x1b[0m (${pkg.dir})...`);
+        const result = await execCommand(publishArgs, pkgDir);
+
+        if (result.success) {
+          console.log(`  \x1b[32m✓\x1b[0m \x1b[32mSuccessfully published ${pkg.name}\x1b[0m`);
+          published = true;
+        } else {
+          // Check if error is OTP related
+          if (result.output.includes('EOTP') || result.output.includes('one-time password') || result.output.includes('OTP')) {
+            console.log(`\n\x1b[33m⚠️  OTP diperlukan atau telah kedaluwarsa untuk ${pkg.name}.\x1b[0m`);
+            const newOtp = prompt(`🔑 Masukkan kode OTP baru untuk ${pkg.name}: `);
+            if (newOtp && newOtp.trim()) {
+              currentOtp = newOtp.trim();
+              continue; // retry loop with new OTP
+            }
+          }
+
+          console.error(`  \x1b[31m✗ Failed to publish ${pkg.name}:\x1b[0m\n${result.output}`);
+          if (!isDryRun) {
+            throw new Error(`Publish failed at ${pkg.name}`);
+          }
+          break;
+        }
       }
     }
 
