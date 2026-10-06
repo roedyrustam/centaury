@@ -1,0 +1,33 @@
+name: Centaury CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun runtime
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Strict TypeScript Typecheck
+        run: bun run typecheck
+
+      - name: Run Test Suites (Bun Test)
+        run: bun test
+
+      - name: Run Performance Benchmarks
+        run: bun run bench
