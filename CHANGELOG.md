@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0-alpha] - 2026-10-07
 
 ### Added
+- **Production Package Packaging & Release Readiness (`@centaury/*`)**:
+  - Full TypeScript declaration emission (`.d.ts`) integrated into `scripts/build.ts` via `tsc --declaration --emitDeclarationOnly`, mapped into each package's `dist/` directory.
+  - Standardized all 6 package `package.json` configurations with strict release fields: `main`, `module`, `types`, `exports`, `files: ["dist", "README.md", "LICENSE"]`, and `publishConfig: { access: "public" }`.
+  - Added official permissive `LICENSE` (MIT) to repository root and included in package distributions.
+  - Universal binary loader for `packages/cli/bin/centaury.js` supporting both compiled distribution (`dist/index.js`) and local dev runtime (`src/cli.ts`).
+- **End-to-End Real-World Release Verification (`scripts/e2e-release-test.ts`)**:
+  - New developer verification script accessible via `bun run release:check`.
+  - Verifies the full user journey autonomously: project scaffolding via CLI -> server boot on random port -> HTML web UI delivery -> type-safe RPC procedure execution -> MCP v1.x schema discovery -> graceful process termination with 100% success.
 - **Plugin Architecture & Enterprise Security Plugins (`@centaury/core`)**:
   - Implemented modular `CentauryPlugin` interface with `app.usePlugin(plugin)`.
   - Built-in `securityHeadersPlugin`: Automated enterprise Content-Security-Policy (CSP), HSTS, X-Frame-Options, X-Content-Type-Options: nosniff, and Referrer-Policy.

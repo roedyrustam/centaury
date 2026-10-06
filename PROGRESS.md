@@ -77,3 +77,12 @@
 - [x] Cybernetic Client Devtools HUD `<c-devtools>` dengan live signal registry (`registerSignal`, `getRegisteredSignals`).
 - [x] Monorepo Production Build Pipeline (`scripts/build.ts`) menghasilkan bundle produksi dalam <45ms.
 - [x] Regresi 51 unit & integration tests monorepo 100% lulus.
+
+### Phase 8.3: Official Public Release & Packaging Readiness [COMPLETED]
+- [x] Lisensi resmi MIT ditambahkan (`LICENSE`) dan disertakan pada setiap paket.
+- [x] Pipeline `.d.ts` declaration otomatis pada `scripts/build.ts` memetakan tipe TypeScript ke seluruh `dist/` monorepo.
+- [x] Standardisasi metadata paket `package.json` (`main`, `module`, `types`, `exports`, `files`, `publishConfig: { access: "public" }`).
+- [x] Universal CLI loader pada `packages/cli/bin/centaury.js` mendukung eksekusi dari bundle `dist/` dan mode dev `src/`.
+- [x] Script verifikasi end-to-end rilis `bun run release:check` (`scripts/e2e-release-test.ts`) menguji siklus hidup lengkap (scaffolding, server boot, HTML UI, RPC call, MCP introspection) dengan 100% sukses.
+- [x] Seluruh unit/integration test (51/51), typecheck (`tsc --noEmit`), dan micro-benchmarks siap rilis.
+

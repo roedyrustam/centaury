@@ -12,7 +12,8 @@
     "build": "bun run scripts/build.ts",
     "test": "bun test",
     "bench": "bun run scripts/benchmark.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release:check": "bun run scripts/e2e-release-test.ts"
   },
   "keywords": [
     "centaury",

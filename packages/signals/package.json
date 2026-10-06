@@ -2,13 +2,35 @@
   "name": "@centaury/signals",
   "version": "1.0.0-alpha",
   "description": "Zero-Hydration Micro-Signals and Native Web Components for Centaury",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "bun test"
   },
   "devDependencies": {
     "happy-dom": "^17.1.8"
+  },
+  "author": "Roedy Rustam & Antigravity",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roedyrustam/centaury.git",
+    "directory": "packages/signals"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

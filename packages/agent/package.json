@@ -2,13 +2,35 @@
   "name": "@centaury/agent",
   "version": "1.0.0-alpha",
   "description": "Dual-Citizen Model Context Protocol (MCP v1.x) & Live AST Reflector for Centaury",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "bun test"
   },
   "dependencies": {
     "@centaury/core": "workspace:*"
+  },
+  "author": "Roedy Rustam & Antigravity",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roedyrustam/centaury.git",
+    "directory": "packages/agent"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
