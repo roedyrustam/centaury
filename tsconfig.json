@@ -13,6 +13,17 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true
-  }
+    "isolatedModules": true,
+    "paths": {
+      "@centaury-ai/core": ["./packages/core/src/index.ts"],
+      "@centaury-ai/signals": ["./packages/signals/src/index.ts"],
+      "@centaury-ai/ephemeral": ["./packages/ephemeral/src/index.ts"],
+      "@centaury-ai/astra": ["./packages/astra/src/index.ts"],
+      "@centaury-ai/agent": ["./packages/agent/src/index.ts"],
+      "@centaury-ai/cli": ["./packages/cli/src/index.ts"],
+      "@centaury-ai/sse": ["./packages/sse/src/index.ts"]
+    }
+  },
+  "exclude": ["examples", "node_modules"]
 }
+
