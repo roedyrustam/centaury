@@ -59,6 +59,13 @@ const builds: BuildConfig[] = [
     target: 'bun',
   },
   {
+    name: 'sse',
+    entry: 'packages/sse/src/index.ts',
+    pkgDir: 'packages/sse',
+    outdir: 'packages/sse/dist',
+    target: 'bun',
+  },
+  {
     name: 'centaury',
     entry: 'packages/centaury/src/index.ts',
     pkgDir: 'packages/centaury',
@@ -66,6 +73,7 @@ const builds: BuildConfig[] = [
     target: 'bun',
   },
 ];
+
 
 async function runBuild() {
   console.log('\n\x1b[36m🌌 BUILDING CENTAURY MONOREPO PACKAGES...\x1b[0m\n');

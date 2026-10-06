@@ -50,6 +50,7 @@
         "@centaury-ai/cli": "workspace:*",
         "@centaury-ai/core": "workspace:*",
         "@centaury-ai/signals": "workspace:*",
+        "@centaury-ai/sse": "workspace:*",
       },
     },
     "packages/cli": {
@@ -89,6 +90,16 @@
         "happy-dom": "^17.1.8",
       },
     },
+    "packages/sse": {
+      "name": "@centaury-ai/sse",
+      "version": "1.0.0-alpha",
+      "dependencies": {
+        "@centaury-ai/core": "workspace:*",
+      },
+      "peerDependencies": {
+        "typescript": "^5.8.0",
+      },
+    },
   },
   "packages": {
     "@centaury-ai/agent": ["@centaury-ai/agent@workspace:packages/agent"],
@@ -102,6 +113,8 @@
     "@centaury-ai/ephemeral": ["@centaury-ai/ephemeral@workspace:packages/ephemeral"],
 
     "@centaury-ai/signals": ["@centaury-ai/signals@workspace:packages/signals"],
+
+    "@centaury-ai/sse": ["@centaury-ai/sse@workspace:packages/sse"],
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 

@@ -1,13 +1,10 @@
 {
-  "name": "centaury",
+  "name": "@centaury-ai/sse",
   "version": "1.0.0-alpha",
-  "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems",
+  "description": "Native Bun SSE Event Bus with topic-based pub/sub, retry logic, and auto-reconnect for Centaury Framework",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "centaury": "./bin/centaury.js"
-  },
   "type": "module",
   "exports": {
     ".": {
@@ -16,23 +13,25 @@
     }
   },
   "files": [
-    "bin",
     "dist",
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "test": "bun test"
+  },
   "dependencies": {
-    "@centaury-ai/cli": "workspace:*",
-    "@centaury-ai/core": "workspace:*",
-    "@centaury-ai/signals": "workspace:*",
-    "@centaury-ai/sse": "workspace:*"
+    "@centaury-ai/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.0"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/roedyrustam/centaury.git",
-    "directory": "packages/centaury"
+    "directory": "packages/sse"
   },
   "publishConfig": {
     "access": "public"
