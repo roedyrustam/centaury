@@ -1,5 +1,5 @@
 {
-  "name": "@centaury/core",
+  "name": "@centaury-ai/core",
   "version": "1.0.0-alpha",
   "description": "High-throughput Bun Micro-Kernel & Trie Router for Centaury Framework",
   "main": "./dist/index.js",

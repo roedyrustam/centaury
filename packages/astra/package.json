@@ -1,5 +1,5 @@
 {
-  "name": "@centaury/astra",
+  "name": "@centaury-ai/astra",
   "version": "1.0.0-alpha",
   "description": "Project Astra Multimodal Live Audio, Vision & Screen-Grounding Gateway for Centaury",
   "main": "./dist/index.js",
@@ -21,7 +21,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@centaury/core": "workspace:*"
+    "@centaury-ai/core": "workspace:*"
   },
   "devDependencies": {
     "happy-dom": "^17.1.8"

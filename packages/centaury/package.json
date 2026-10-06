@@ -22,9 +22,9 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@centaury/cli": "workspace:*",
-    "@centaury/core": "workspace:*",
-    "@centaury/signals": "workspace:*"
+    "@centaury-ai/cli": "workspace:*",
+    "@centaury-ai/core": "workspace:*",
+    "@centaury-ai/signals": "workspace:*"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",

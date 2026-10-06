@@ -143,17 +143,17 @@ async function scaffoldProject(projectName: string, options: CreateOptions): Pro
 
   // 1. package.json
   const dependencies: Record<string, string> = {
-    '@centaury/core': '^1.0.0-alpha',
-    '@centaury/signals': '^1.0.0-alpha',
+    '@centaury-ai/core': '^1.0.0-alpha',
+    '@centaury-ai/signals': '^1.0.0-alpha',
     zod: '^3.24.2',
   };
 
   if (options.template === 'fullstack' || options.template === 'agentic') {
-    dependencies['@centaury/ephemeral'] = '^1.0.0-alpha';
+    dependencies['@centaury-ai/ephemeral'] = '^1.0.0-alpha';
   }
   if (options.template === 'agentic') {
-    dependencies['@centaury/astra'] = '^1.0.0-alpha';
-    dependencies['@centaury/agent'] = '^1.0.0-alpha';
+    dependencies['@centaury-ai/astra'] = '^1.0.0-alpha';
+    dependencies['@centaury-ai/agent'] = '^1.0.0-alpha';
   }
 
   const pkgJson = {
@@ -185,7 +185,7 @@ async function scaffoldProject(projectName: string, options: CreateOptions): Pro
   // 3. src/server.ts
   let serverCode = '';
   if (options.template === 'minimal') {
-    serverCode = `import { CentauryServer } from '@centaury/core';
+    serverCode = `import { CentauryServer } from '@centaury-ai/core';
 import { join } from 'path';
 
 const app = new CentauryServer({ port: 3000 });
@@ -203,8 +203,8 @@ app.listen();
 console.log('🌌 Centaury minimal server running at http://localhost:3000');
 `;
   } else if (options.template === 'agentic') {
-    serverCode = `import { CentauryServer } from '@centaury/core';
-import { CentauryMCPServer } from '@centaury/agent';
+    serverCode = `import { CentauryServer } from '@centaury-ai/core';
+import { CentauryMCPServer } from '@centaury-ai/agent';
 import { z } from 'zod';
 import { join } from 'path';
 
@@ -245,7 +245,7 @@ console.log('🤖 MCP Endpoint active at http://localhost:3000/mcp');
 `;
   } else {
     // fullstack default
-    serverCode = `import { CentauryServer } from '@centaury/core';
+    serverCode = `import { CentauryServer } from '@centaury-ai/core';
 import { z } from 'zod';
 import { join } from 'path';
 
@@ -368,13 +368,13 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
   if (options.install) {
     console.log(`\n📦 Linking Centaury packages & installing dependencies in ${projectName}...`);
 
-    // Automatically link local @centaury packages
-    const pkgsToLink = ['@centaury/core', '@centaury/signals'];
+    // Automatically link local @centaury-ai packages
+    const pkgsToLink = ['@centaury-ai/core', '@centaury-ai/signals'];
     if (options.template === 'fullstack' || options.template === 'agentic') {
-      pkgsToLink.push('@centaury/ephemeral');
+      pkgsToLink.push('@centaury-ai/ephemeral');
     }
     if (options.template === 'agentic') {
-      pkgsToLink.push('@centaury/astra', '@centaury/agent');
+      pkgsToLink.push('@centaury-ai/astra', '@centaury-ai/agent');
     }
 
     for (const pkg of pkgsToLink) {

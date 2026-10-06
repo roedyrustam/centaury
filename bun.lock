@@ -15,36 +15,26 @@
       "name": "centaury-showcase-app",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@centaury/agent": "workspace:*",
-        "@centaury/astra": "workspace:*",
-        "@centaury/core": "workspace:*",
-        "@centaury/ephemeral": "workspace:*",
-        "@centaury/signals": "workspace:*",
-        "zod": "^3.24.2",
-      },
-    },
-    "examples/test-local-app": {
-      "name": "test-local-app",
-      "version": "1.0.0",
-      "dependencies": {
-        "@centaury/core": "^1.0.0-alpha",
-        "@centaury/ephemeral": "^1.0.0-alpha",
-        "@centaury/signals": "^1.0.0-alpha",
+        "@roedyrustam/agent": "workspace:*",
+        "@roedyrustam/astra": "workspace:*",
+        "@roedyrustam/core": "workspace:*",
+        "@roedyrustam/ephemeral": "workspace:*",
+        "@roedyrustam/signals": "workspace:*",
         "zod": "^3.24.2",
       },
     },
     "packages/agent": {
-      "name": "@centaury/agent",
+      "name": "@roedyrustam/agent",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@centaury/core": "workspace:*",
+        "@roedyrustam/core": "workspace:*",
       },
     },
     "packages/astra": {
-      "name": "@centaury/astra",
+      "name": "@roedyrustam/astra",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@centaury/core": "workspace:*",
+        "@roedyrustam/core": "workspace:*",
       },
       "devDependencies": {
         "happy-dom": "^17.1.8",
@@ -57,23 +47,23 @@
         "centaury": "./bin/centaury.js",
       },
       "dependencies": {
-        "@centaury/cli": "workspace:*",
-        "@centaury/core": "workspace:*",
-        "@centaury/signals": "workspace:*",
+        "@roedyrustam/cli": "workspace:*",
+        "@roedyrustam/core": "workspace:*",
+        "@roedyrustam/signals": "workspace:*",
       },
     },
     "packages/cli": {
-      "name": "@centaury/cli",
+      "name": "@roedyrustam/cli",
       "version": "1.0.0-alpha",
       "bin": {
         "centaury": "./bin/centaury.js",
       },
       "dependencies": {
-        "@centaury/core": "workspace:*",
+        "@roedyrustam/core": "workspace:*",
       },
     },
     "packages/core": {
-      "name": "@centaury/core",
+      "name": "@roedyrustam/core",
       "version": "1.0.0-alpha",
       "dependencies": {
         "zod": "^3.24.2",
@@ -83,17 +73,17 @@
       },
     },
     "packages/ephemeral": {
-      "name": "@centaury/ephemeral",
+      "name": "@roedyrustam/ephemeral",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@centaury/signals": "^1.0.0-alpha",
+        "@roedyrustam/signals": "workspace:*",
       },
       "devDependencies": {
         "happy-dom": "^17.1.8",
       },
     },
     "packages/signals": {
-      "name": "@centaury/signals",
+      "name": "@roedyrustam/signals",
       "version": "1.0.0-alpha",
       "devDependencies": {
         "happy-dom": "^17.1.8",
@@ -101,17 +91,17 @@
     },
   },
   "packages": {
-    "@centaury/agent": ["@centaury/agent@workspace:packages/agent"],
+    "@roedyrustam/agent": ["@roedyrustam/agent@workspace:packages/agent"],
 
-    "@centaury/astra": ["@centaury/astra@workspace:packages/astra"],
+    "@roedyrustam/astra": ["@roedyrustam/astra@workspace:packages/astra"],
 
-    "@centaury/cli": ["@centaury/cli@workspace:packages/cli"],
+    "@roedyrustam/cli": ["@roedyrustam/cli@workspace:packages/cli"],
 
-    "@centaury/core": ["@centaury/core@workspace:packages/core"],
+    "@roedyrustam/core": ["@roedyrustam/core@workspace:packages/core"],
 
-    "@centaury/ephemeral": ["@centaury/ephemeral@workspace:packages/ephemeral"],
+    "@roedyrustam/ephemeral": ["@roedyrustam/ephemeral@workspace:packages/ephemeral"],
 
-    "@centaury/signals": ["@centaury/signals@workspace:packages/signals"],
+    "@roedyrustam/signals": ["@roedyrustam/signals@workspace:packages/signals"],
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 
@@ -124,8 +114,6 @@
     "centaury-showcase-app": ["centaury-showcase-app@workspace:examples/showcase-app"],
 
     "happy-dom": ["happy-dom@17.6.3", "", { "dependencies": { "webidl-conversions": "^7.0.0", "whatwg-mimetype": "^3.0.0" } }, "sha512-UVIHeVhxmxedbWPCfgS55Jg2rDfwf2BCKeylcPSqazLz5w3Kri7Q4xdBJubsr/+VUzFLh0VjIvh13RaDA2/Xug=="],
-
-    "test-local-app": ["test-local-app@workspace:examples/test-local-app"],
 
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

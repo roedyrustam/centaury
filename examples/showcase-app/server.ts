@@ -3,9 +3,9 @@
  * @description Centaury Showcase Application Server (Fullstack Demonstrator)
  */
 
-import { CentauryServer } from '@centaury/core';
-import { CentauryMCPServer } from '@centaury/agent';
-import { AstraGateway } from '@centaury/astra';
+import { CentauryServer } from '@centaury-ai/core';
+import { CentauryMCPServer } from '@centaury-ai/agent';
+import { AstraGateway } from '@centaury-ai/astra';
 import { z } from 'zod';
 import { join } from 'path';
 

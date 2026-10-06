@@ -3,6 +3,6 @@
  * @description Main entry point for Centaury Framework
  */
 
-export * from '@centaury/core';
-export * from '@centaury/signals';
-export * from '@centaury/cli';
+export * from '@centaury-ai/core';
+export * from '@centaury-ai/signals';
+export * from '@centaury-ai/cli';

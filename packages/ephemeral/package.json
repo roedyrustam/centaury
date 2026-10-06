@@ -1,5 +1,5 @@
 {
-  "name": "@centaury/ephemeral",
+  "name": "@centaury-ai/ephemeral",
   "version": "1.0.0-alpha",
   "description": "Zero-Eval Ephemeral Generative UI Synthesizer & Token Streamer for Centaury",
   "main": "./dist/index.js",
@@ -21,7 +21,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@centaury/signals": "workspace:*"
+    "@centaury-ai/signals": "workspace:*"
   },
   "devDependencies": {
     "happy-dom": "^17.1.8"
