@@ -1,0 +1,148 @@
+/**
+ * @file publish.ts
+ * @description Monorepo Production Publish Automation for Centaury Framework
+ */
+
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+
+interface PackagePublishTarget {
+  name: string;
+  dir: string;
+}
+
+const packagesToPublish: PackagePublishTarget[] = [
+  { name: '@centaury/core', dir: 'packages/core' },
+  { name: '@centaury/signals', dir: 'packages/signals' },
+  { name: '@centaury/ephemeral', dir: 'packages/ephemeral' },
+  { name: '@centaury/astra', dir: 'packages/astra' },
+  { name: '@centaury/agent', dir: 'packages/agent' },
+  { name: '@centaury/cli', dir: 'packages/cli' },
+  { name: 'centaury', dir: 'packages/centaury' },
+];
+
+const isDryRun = process.argv.includes('--dry-run');
+
+async function execCommand(command: string[], cwd: string): Promise<{ success: boolean; output: string }> {
+  const proc = Bun.spawn(command, {
+    cwd,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  const exitCode = await proc.exited;
+  const stdout = await new Response(proc.stdout).text();
+  const stderr = await new Response(proc.stderr).text();
+
+  return {
+    success: exitCode === 0,
+    output: (stdout + '\n' + stderr).trim(),
+  };
+}
+
+async function runPublishPipeline() {
+  console.log('\n\x1b[36m🌌 CENTAURY MONOREPO PUBLISH PIPELINE\x1b[0m');
+  console.log(`\x1b[90mMode: ${isDryRun ? 'DRY-RUN (Simulated)' : 'PRODUCTION (Real Publish)'}\x1b[0m\n`);
+
+  // 1. Verify npm credentials
+  console.log('🔑 Step 1: Checking npm authentication...');
+  const whoami = await execCommand(['npm', 'whoami'], process.cwd());
+  if (!whoami.success) {
+    console.error('\x1b[31m✗ Not logged in to npm.\x1b[0m Please run `npm login` first.');
+    process.exit(1);
+  }
+  const loggedInUser = whoami.output.split('\n')[0].trim();
+  console.log(`  \x1b[32m✓\x1b[0m Logged in as: \x1b[33m${loggedInUser}\x1b[0m`);
+
+  // 2. Run fresh build
+  console.log('\n🔨 Step 2: Compiling all packages and type definitions...');
+  const buildResult = await execCommand(['bun', 'run', 'scripts/build.ts'], process.cwd());
+  if (!buildResult.success) {
+    console.error('\x1b[31m✗ Build pipeline failed:\x1b[0m\n', buildResult.output);
+    process.exit(1);
+  }
+  console.log('  \x1b[32m✓\x1b[0m All packages compiled successfully.');
+
+  // 3. Track package.json backups for rollback
+  const packageBackups = new Map<string, string>();
+
+  try {
+    // Read root version
+    const rootPkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
+    const releaseVersion = rootPkg.version || '1.0.0-alpha';
+
+    console.log(`\n📦 Step 3: Preparing package manifests (resolving workspace:* → ^${releaseVersion})...`);
+
+    for (const pkg of packagesToPublish) {
+      const pkgJsonPath = join(process.cwd(), pkg.dir, 'package.json');
+      if (!existsSync(pkgJsonPath)) continue;
+
+      const originalRaw = readFileSync(pkgJsonPath, 'utf-8');
+      packageBackups.set(pkgJsonPath, originalRaw);
+
+      const json = JSON.parse(originalRaw);
+
+      // Replace workspace:* in dependencies
+      let modified = false;
+      for (const depType of ['dependencies', 'peerDependencies', 'devDependencies'] as const) {
+        const deps = json[depType];
+        if (deps && typeof deps === 'object') {
+          for (const [depName, depVer] of Object.entries(deps)) {
+            if (typeof depVer === 'string' && depVer.startsWith('workspace:')) {
+              deps[depName] = `^${releaseVersion}`;
+              modified = true;
+            }
+          }
+        }
+      }
+
+      // Ensure normalized repository URL
+      if (json.repository && typeof json.repository === 'object') {
+        json.repository.url = 'git+https://github.com/roedyrustam/centaury.git';
+      }
+
+      if (modified) {
+        writeFileSync(pkgJsonPath, JSON.stringify(json, null, 2) + '\n');
+        console.log(`  \x1b[32m✓\x1b[0m Resolved workspace dependencies in \x1b[35m${pkg.name}\x1b[0m`);
+      }
+    }
+
+    // 4. Publish each package
+    console.log(`\n🚀 Step 4: Publishing packages to npmjs registry...`);
+
+    for (const pkg of packagesToPublish) {
+      const pkgDir = join(process.cwd(), pkg.dir);
+      if (!existsSync(pkgDir)) continue;
+
+      const publishArgs = ['npm', 'publish', '--access', 'public'];
+      if (isDryRun) {
+        publishArgs.push('--dry-run');
+      }
+
+      console.log(`  📦 Publishing \x1b[33m${pkg.name}\x1b[0m (${pkg.dir})...`);
+      const result = await execCommand(publishArgs, pkgDir);
+
+      if (!result.success) {
+        console.error(`  \x1b[31m✗ Failed to publish ${pkg.name}:\x1b[0m\n${result.output}`);
+        if (!isDryRun) {
+          throw new Error(`Publish failed at ${pkg.name}`);
+        }
+      } else {
+        console.log(`  \x1b[32m✓\x1b[0m \x1b[32mSuccessfully published ${pkg.name}\x1b[0m`);
+      }
+    }
+
+    console.log(`\n\x1b[32m✨ All packages published successfully to https://www.npmjs.com/~${loggedInUser} !\x1b[0m\n`);
+  } finally {
+    // 5. Always restore package.json files so git repo remains clean
+    console.log('🔄 Cleaning up and restoring local workspace manifests...');
+    for (const [filePath, originalContent] of packageBackups.entries()) {
+      writeFileSync(filePath, originalContent);
+    }
+    console.log('  \x1b[32m✓\x1b[0m Workspace restored cleanly.\n');
+  }
+}
+
+runPublishPipeline().catch((err) => {
+  console.error('\n\x1b[31m[Publish Pipeline Error]\x1b[0m', err.message);
+  process.exit(1);
+});

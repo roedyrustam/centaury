@@ -58,6 +58,13 @@ const builds: BuildConfig[] = [
     outdir: 'packages/cli/dist',
     target: 'bun',
   },
+  {
+    name: 'centaury',
+    entry: 'packages/centaury/src/index.ts',
+    pkgDir: 'packages/centaury',
+    outdir: 'packages/centaury/dist',
+    target: 'bun',
+  },
 ];
 
 async function runBuild() {

@@ -1,0 +1,39 @@
+{
+  "name": "centaury",
+  "version": "1.0.0-alpha",
+  "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "centaury": "./bin/centaury.js"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@centaury/cli": "workspace:*",
+    "@centaury/core": "workspace:*",
+    "@centaury/signals": "workspace:*"
+  },
+  "author": "Roedy Rustam & Antigravity",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roedyrustam/centaury.git",
+    "directory": "packages/centaury"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
