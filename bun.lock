@@ -23,6 +23,16 @@
         "zod": "^3.24.2",
       },
     },
+    "examples/test-local-app": {
+      "name": "test-local-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "@centaury/core": "^1.0.0-alpha",
+        "@centaury/ephemeral": "^1.0.0-alpha",
+        "@centaury/signals": "^1.0.0-alpha",
+        "zod": "^3.24.2",
+      },
+    },
     "packages/agent": {
       "name": "@centaury/agent",
       "version": "1.0.0-alpha",
@@ -76,7 +86,7 @@
       "name": "@centaury/ephemeral",
       "version": "1.0.0-alpha",
       "dependencies": {
-        "@centaury/signals": "workspace:*",
+        "@centaury/signals": "^1.0.0-alpha",
       },
       "devDependencies": {
         "happy-dom": "^17.1.8",
@@ -114,6 +124,8 @@
     "centaury-showcase-app": ["centaury-showcase-app@workspace:examples/showcase-app"],
 
     "happy-dom": ["happy-dom@17.6.3", "", { "dependencies": { "webidl-conversions": "^7.0.0", "whatwg-mimetype": "^3.0.0" } }, "sha512-UVIHeVhxmxedbWPCfgS55Jg2rDfwf2BCKeylcPSqazLz5w3Kri7Q4xdBJubsr/+VUzFLh0VjIvh13RaDA2/Xug=="],
+
+    "test-local-app": ["test-local-app@workspace:examples/test-local-app"],
 
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

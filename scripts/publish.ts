@@ -65,12 +65,18 @@ async function runPublishPipeline() {
   const loggedInUser = whoami.output.split('\n')[0].trim();
   console.log(`  \x1b[32m✓\x1b[0m Logged in as: \x1b[33m${loggedInUser}\x1b[0m`);
 
-  // If live publish and no OTP provided yet, prompt for OTP once upfront
+  // If live publish and no OTP provided yet, optionally prompt for OTP upfront
   if (!isDryRun && !currentOtp) {
-    console.log('\n\x1b[33m[2FA Required]\x1b[0m Akun npm Anda mengaktifkan Two-Factor Authentication (OTP).');
-    const input = prompt('🔑 Masukkan 6-digit kode OTP npm Authenticator Anda: ');
+    console.log('\n\x1b[33m[2FA Check]\x1b[0m Jika akun Anda menggunakan 2FA Authenticator, masukkan 6 digit OTP.');
+    console.log('\x1b[90m(Tekan ENTER untuk lewati jika tidak memiliki OTP atau menggunakan Access Token)\x1b[0m');
+    const input = prompt('🔑 Masukkan 6-digit angka OTP (atau tekan Enter untuk lewati): ');
     if (input && input.trim()) {
-      currentOtp = input.trim();
+      const cleaned = input.trim();
+      if (/^\d{6}$/.test(cleaned)) {
+        currentOtp = cleaned;
+      } else {
+        console.log(`\x1b[33m⚠️ Input bukan 6 angka, melanjutkan tanpa OTP...\x1b[0m`);
+      }
     }
   }
 
@@ -157,10 +163,12 @@ async function runPublishPipeline() {
           // Check if error is OTP related
           if (result.output.includes('EOTP') || result.output.includes('one-time password') || result.output.includes('OTP')) {
             console.log(`\n\x1b[33m⚠️  OTP diperlukan atau telah kedaluwarsa untuk ${pkg.name}.\x1b[0m`);
-            const newOtp = prompt(`🔑 Masukkan kode OTP baru untuk ${pkg.name}: `);
-            if (newOtp && newOtp.trim()) {
+            const newOtp = prompt(`🔑 Masukkan 6-digit angka OTP baru untuk ${pkg.name}: `);
+            if (newOtp && /^\d{6}$/.test(newOtp.trim())) {
               currentOtp = newOtp.trim();
               continue; // retry loop with new OTP
+            } else {
+              console.error('\x1b[31m✗ Input OTP tidak valid (harus 6 angka).\x1b[0m');
             }
           }
 

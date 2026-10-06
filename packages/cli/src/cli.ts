@@ -366,7 +366,29 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
 
   // Optional: run install
   if (options.install) {
-    console.log(`\n📦 Running 'bun install' in ${projectName}...`);
+    console.log(`\n📦 Linking Centaury packages & installing dependencies in ${projectName}...`);
+
+    // Automatically link local @centaury packages
+    const pkgsToLink = ['@centaury/core', '@centaury/signals'];
+    if (options.template === 'fullstack' || options.template === 'agentic') {
+      pkgsToLink.push('@centaury/ephemeral');
+    }
+    if (options.template === 'agentic') {
+      pkgsToLink.push('@centaury/astra', '@centaury/agent');
+    }
+
+    for (const pkg of pkgsToLink) {
+      try {
+        const linkProc = Bun.spawn(['bun', 'link', pkg], {
+          cwd: targetDir,
+          stdio: ['ignore', 'ignore', 'ignore'],
+        });
+        await linkProc.exited;
+      } catch {
+        // fallback to standard install
+      }
+    }
+
     const proc = Bun.spawn(['bun', 'install'], {
       cwd: targetDir,
       stdio: ['inherit', 'inherit', 'inherit'],
