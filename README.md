@@ -6,7 +6,7 @@
 **Engineered specifically for Google Gemini 4 Pro & Project Astra**
 
 [![Version](https://img.shields.io/badge/version-1.0.0--alpha-06b6d4.svg?style=flat-square)](https://github.com/roedyrustam/centaury)
-[![Tests](https://img.shields.io/badge/tests-48%2F48%20passing-10b981.svg?style=flat-square)](https://github.com/roedyrustam/centaury)
+[![Tests](https://img.shields.io/badge/tests-51%2F51%20passing-10b981.svg?style=flat-square)](https://github.com/roedyrustam/centaury)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8%20Strict-3178c6.svg?style=flat-square)](https://www.typescriptlang.org/)
 [![Runtime](https://img.shields.io/badge/Runtime-Bun%201.3%2B-f472b6.svg?style=flat-square)](https://bun.sh)
 [![Client Budget](https://img.shields.io/badge/Client%20Bundle-%3C%205KB-8b5cf6.svg?style=flat-square)](https://github.com/roedyrustam/centaury)
