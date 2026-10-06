@@ -57,6 +57,11 @@ async function verifyRelease() {
     const tsConfig = JSON.parse(await Bun.file(tsConfigFile).text());
     tsConfig.compilerOptions.baseUrl = '.';
     tsConfig.compilerOptions.paths = {
+      '@centaury-ai/core': [join(process.cwd(), 'packages/core/src/index.ts')],
+      '@centaury-ai/signals': [join(process.cwd(), 'packages/signals/src/index.ts')],
+      '@centaury-ai/ephemeral': [join(process.cwd(), 'packages/ephemeral/src/index.ts')],
+      '@centaury-ai/astra': [join(process.cwd(), 'packages/astra/src/index.ts')],
+      '@centaury-ai/agent': [join(process.cwd(), 'packages/agent/src/index.ts')],
       '@centaury/core': [join(process.cwd(), 'packages/core/src/index.ts')],
       '@centaury/signals': [join(process.cwd(), 'packages/signals/src/index.ts')],
       '@centaury/ephemeral': [join(process.cwd(), 'packages/ephemeral/src/index.ts')],
