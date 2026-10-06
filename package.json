@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "bun run --cwd examples/showcase-app dev",
-    "build": "bun run --filter \"*\" build",
+    "build": "bun run scripts/build.ts",
     "test": "bun test",
     "bench": "bun run scripts/benchmark.ts",
     "typecheck": "tsc --noEmit"

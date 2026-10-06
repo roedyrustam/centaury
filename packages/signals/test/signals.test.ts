@@ -3,10 +3,12 @@
  * @description Test suite for @centaury/signals reactive engine & DOM bindings
  */
 
+import './setup';
 import { describe, it, expect } from 'bun:test';
 import { Window } from 'happy-dom';
-import { signal, computed, effect, batch, persistedSignal } from '../src/signal';
+import { signal, computed, effect, batch, persistedSignal, getRegisteredSignals } from '../src/signal';
 import { bindText, bindAttr, bindClass, bindModel, scanAndBind } from '../src/dom';
+import { registerCentauryElements } from '../src/elements';
 
 describe('@centaury/signals Atomic Reactive Engine', () => {
   it('manages signal values and triggers subscribers', () => {
@@ -211,5 +213,31 @@ describe('@centaury/signals Zero-Hydration DOM Bindings', () => {
       (globalThis as any).window = originalWindow;
     }
   });
+
+  it('registers signals with debug names and renders in CentauryDevtoolsElement', () => {
+    const window = (globalThis as any).window || new Window();
+    const document = window.document;
+    registerCentauryElements(window.customElements as any);
+
+    const testSig = signal(42, 'core_telemetry_rate');
+    const signals = getRegisteredSignals();
+    expect(signals.has('core_telemetry_rate')).toBe(true);
+    expect(signals.get('core_telemetry_rate')!.peek()).toBe(42);
+
+    const devtools = document.createElement('c-devtools') as any;
+    document.body.appendChild(devtools);
+
+    expect(devtools.isOpen).toBe(false);
+    devtools.toggle();
+    expect(devtools.isOpen).toBe(true);
+
+    const panel = devtools.querySelector('.centaury-devtools-panel');
+    expect(panel).not.toBeNull();
+    expect(panel!.innerHTML).toContain('core_telemetry_rate');
+
+    devtools.toggle();
+    expect(devtools.isOpen).toBe(false);
+  });
 });
+
 

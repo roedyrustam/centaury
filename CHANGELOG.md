@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0-alpha] - 2026-10-07
 
 ### Added
+- **Plugin Architecture & Enterprise Security Plugins (`@centaury/core`)**:
+  - Implemented modular `CentauryPlugin` interface with `app.usePlugin(plugin)`.
+  - Built-in `securityHeadersPlugin`: Automated enterprise Content-Security-Policy (CSP), HSTS, X-Frame-Options, X-Content-Type-Options: nosniff, and Referrer-Policy.
+  - Built-in `rateLimiterPlugin`: Sliding window in-memory rate-limiter with configurable `windowMs`, `maxRequests`, dynamic key generators, and RFC 9457 HTTP 429 problem details response.
+- **Cybernetic Client Devtools HUD (`@centaury/signals`)**:
+  - Standard Web Component `<c-devtools>` rendering a floating, collapsible, glassmorphic devtools overlay in the browser.
+  - Signal Registry integration (`registerSignal`, `getRegisteredSignals`, `signal(val, debugName)`): live real-time signal inspection with auto-refresh.
+  - Zero-Hydration architecture: pure DOM, completely absent of third-party bloat.
+- **Monorepo Production Build Pipeline (`scripts/build.ts`)**:
+  - Unified `bun run build` building all 6 monorepo packages in under 45ms.
 - **Multi-Template Scaffolding & Auto-Install (`@centaury/cli`)**:
   - Added `--template` option supporting `minimal` (<1.5KB), `fullstack` (default), and `agentic` (MCP + Ephemeral UI + Astra gateway) archetypes.
   - Added `--install, -i` flag to automatically execute `bun install` immediately after project scaffolding.

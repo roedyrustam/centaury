@@ -6,6 +6,7 @@
 import { CentauryContext } from './context';
 import { CentauryRouter, RouteHandler, MiddlewareHandler } from './router';
 import { CentauryRPC, ProcedureDefinition } from './rpc';
+import type { CentauryPlugin } from './plugins';
 import type { Server, ServerWebSocket } from 'bun';
 
 export interface CentauryServerOptions {
@@ -120,6 +121,14 @@ export class CentauryServer {
 
   public use(middleware: MiddlewareHandler): this {
     this.router.use(middleware);
+    return this;
+  }
+
+  /**
+   * Install a Centaury plugin
+   */
+  public usePlugin(plugin: CentauryPlugin): this {
+    plugin.install(this);
     return this;
   }
 

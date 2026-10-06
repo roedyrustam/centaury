@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 import { CentauryServer } from '../src/server';
+import { securityHeadersPlugin, rateLimiterPlugin } from '../src/plugins';
 import { z } from 'zod';
 
 describe('@centaury/core Micro-Kernel Engine', () => {
@@ -118,4 +119,65 @@ describe('@centaury/core Micro-Kernel Engine', () => {
     expect(firstMsg.engine).toBe('Centaury 1.0.0-alpha');
     ws.close();
   });
+
+  it('installs custom plugins and applies security headers plugin', async () => {
+    const pluginServer = new CentauryServer({ port: 0 });
+    let installed = false;
+
+    pluginServer.usePlugin({
+      name: 'test-plugin',
+      install: () => {
+        installed = true;
+      },
+    });
+
+    pluginServer.usePlugin(securityHeadersPlugin());
+    pluginServer.get('/secure-page', (ctx) => ctx.jsonResponse({ secure: true }));
+
+    pluginServer.listen();
+    try {
+      expect(installed).toBe(true);
+      const res = await fetch(`http://localhost:${pluginServer.port}/secure-page`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+      expect(res.headers.get('X-Frame-Options')).toBe('DENY');
+      expect(res.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
+      expect(res.headers.get('Content-Security-Policy')).toBeDefined();
+    } finally {
+      pluginServer.stop();
+    }
+  });
+
+  it('enforces rate limiting and returns 429 when max requests exceeded', async () => {
+    const rateLimitedServer = new CentauryServer({ port: 0 });
+    rateLimitedServer.usePlugin(
+      rateLimiterPlugin({
+        maxRequests: 2,
+        windowMs: 5000,
+        keyGenerator: () => 'fixed-test-client',
+      })
+    );
+    rateLimitedServer.get('/api/test', (ctx) => ctx.jsonResponse({ ok: true }));
+
+    rateLimitedServer.listen();
+    try {
+      const p = rateLimitedServer.port;
+      const res1 = await fetch(`http://localhost:${p}/api/test`);
+      expect(res1.status).toBe(200);
+      expect(res1.headers.get('X-RateLimit-Remaining')).toBe('1');
+
+      const res2 = await fetch(`http://localhost:${p}/api/test`);
+      expect(res2.status).toBe(200);
+      expect(res2.headers.get('X-RateLimit-Remaining')).toBe('0');
+
+      const res3 = await fetch(`http://localhost:${p}/api/test`);
+      expect(res3.status).toBe(429);
+      const err = await res3.json();
+      expect(err.title).toBe('Too Many Requests');
+      expect(res3.headers.get('Retry-After')).toBeDefined();
+    } finally {
+      rateLimitedServer.stop();
+    }
+  });
 });
+

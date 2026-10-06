@@ -69,23 +69,42 @@ export class Signal<T> implements ReadonlySignal<T> {
   }
 }
 
+// Global registry for devtools inspection
+const signalRegistry = new Map<string, Signal<unknown>>();
+
+export function registerSignal<T>(name: string, sig: Signal<T>): void {
+  signalRegistry.set(name, sig as Signal<unknown>);
+}
+
+export function getRegisteredSignals(): Map<string, Signal<unknown>> {
+  return signalRegistry;
+}
+
 /**
- * Create a new reactive signal
+ * Create a new reactive signal with optional debug name for devtools
  */
-export function signal<T>(initialValue: T): Signal<T> {
-  return new Signal<T>(initialValue);
+export function signal<T>(initialValue: T, debugName?: string): Signal<T> {
+  const sig = new Signal<T>(initialValue);
+  if (debugName) {
+    registerSignal(debugName, sig);
+  }
+  return sig;
 }
 
 /**
  * Create an automatically tracking computed signal
  */
-export function computed<T>(fn: () => T): ReadonlySignal<T> {
+export function computed<T>(fn: () => T, debugName?: string): ReadonlySignal<T> {
   const result = new Signal<T>(undefined as unknown as T);
+  if (debugName) {
+    registerSignal(debugName, result);
+  }
   effect(() => {
     result.value = fn();
   });
   return result;
 }
+
 
 /**
  * Execute an effect that automatically tracks and re-runs on signal changes
@@ -140,6 +159,7 @@ export interface PersistOptions<T> {
   serialize?: (val: T) => string;
   deserialize?: (raw: string) => T;
   syncCrossTab?: boolean;
+  debugName?: string;
 }
 
 /**
@@ -179,6 +199,7 @@ export function persistedSignal<T>(
   }
 
   const sig = new Signal<T>(resolvedInitial);
+  registerSignal(options.debugName || key, sig);
 
   // 2. Persist upon changes
   sig.subscribe((val) => {
