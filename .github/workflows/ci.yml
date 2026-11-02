@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Compile Production Bundles & Declarations
+        run: bun run build
+
       - name: Strict TypeScript Typecheck
         run: bun run typecheck
 
@@ -31,9 +34,6 @@ jobs:
 
       - name: Run Performance Benchmarks
         run: bun run bench
-
-      - name: Compile Production Bundles & Declarations
-        run: bun run build
 
       - name: End-to-End Release & User Journey Verification
         run: bun run release:check
