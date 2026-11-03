@@ -16,12 +16,15 @@ const packagesToPublish: PackagePublishTarget[] = [
   { name: '@centaury-ai/signals', dir: 'packages/signals' },
   { name: '@centaury-ai/ephemeral', dir: 'packages/ephemeral' },
   { name: '@centaury-ai/astra', dir: 'packages/astra' },
+  { name: '@centaury-ai/sse', dir: 'packages/sse' },
+  { name: '@centaury-ai/db', dir: 'packages/db' },
   { name: '@centaury-ai/agent', dir: 'packages/agent' },
   { name: '@centaury-ai/cli', dir: 'packages/cli' },
   { name: 'centaury', dir: 'packages/centaury' },
 ];
 
 const isDryRun = process.argv.includes('--dry-run');
+const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 // Extract --otp from command line arguments if provided
 let currentOtp: string | null = null;
@@ -57,7 +60,7 @@ async function runPublishPipeline() {
 
   // 1. Verify npm credentials
   console.log('🔑 Step 1: Checking npm authentication...');
-  const whoami = await execCommand(['npm', 'whoami'], process.cwd());
+  const whoami = await execCommand([npmBin, 'whoami'], process.cwd());
   if (!whoami.success) {
     console.error('\x1b[31m✗ Not logged in to npm.\x1b[0m Please run `npm login` first.');
     process.exit(1);
@@ -66,7 +69,7 @@ async function runPublishPipeline() {
   console.log(`  \x1b[32m✓\x1b[0m Logged in as: \x1b[33m${loggedInUser}\x1b[0m`);
 
   // If live publish and no OTP provided yet, optionally prompt for OTP upfront
-  if (!isDryRun && !currentOtp) {
+  if (!isDryRun && !currentOtp && process.stdin.isTTY) {
     console.log('\n\x1b[33m[2FA Check]\x1b[0m Jika akun Anda menggunakan 2FA Authenticator, masukkan 6 digit OTP.');
     console.log('\x1b[90m(Tekan ENTER untuk lewati jika tidak memiliki OTP atau menggunakan Access Token)\x1b[0m');
     const input = prompt('🔑 Masukkan 6-digit angka OTP (atau tekan Enter untuk lewati): ');
@@ -145,7 +148,7 @@ async function runPublishPipeline() {
 
       while (!published && attempts < 3) {
         attempts++;
-        const publishArgs = ['npm', 'publish', '--access', 'public'];
+        const publishArgs = [npmBin, 'publish', '--access', 'public'];
         if (isDryRun) {
           publishArgs.push('--dry-run');
         }
@@ -163,7 +166,7 @@ async function runPublishPipeline() {
           // Check if error is OTP related
           if (result.output.includes('EOTP') || result.output.includes('one-time password') || result.output.includes('OTP')) {
             console.log(`\n\x1b[33m⚠️  OTP diperlukan atau telah kedaluwarsa untuk ${pkg.name}.\x1b[0m`);
-            const newOtp = prompt(`🔑 Masukkan 6-digit angka OTP baru untuk ${pkg.name}: `);
+            const newOtp = process.stdin.isTTY ? prompt(`🔑 Masukkan 6-digit angka OTP baru untuk ${pkg.name}: `) : null;
             if (newOtp && /^\d{6}$/.test(newOtp.trim())) {
               currentOtp = newOtp.trim();
               continue; // retry loop with new OTP
