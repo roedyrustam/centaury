@@ -220,6 +220,37 @@ centaury dev
 centaury doctor
 ```
 
+### 7. `@centaury-ai/db` — Bun SQLite & Vector Memory Engine
+Native `bun:sqlite` database micro-kernel with WAL mode, parameterized query builder, migrations, and Float32Array SIMD vector cosine similarity search for agentic RAG and episodic memory.
+
+```ts
+import { CentauryDatabase, query, CentauryVectorStore } from '@centaury-ai/db';
+
+const db = new CentauryDatabase({ path: './app.db', wal: true });
+
+// Type-safe, SQL-injection proof parameterized queries
+const users = query(db)
+  .select(['id', 'name'])
+  .from('users')
+  .where('status = ?', 'active')
+  .all();
+
+// High-speed SQLite Vector Store (7.5M+ ops/sec cosine similarity)
+const vectors = new CentauryVectorStore(db);
+vectors.upsert({
+  id: 'doc-1',
+  collection: 'knowledge',
+  embedding: [0.95, 0.82, 0.11],
+  metadata: { title: 'Project Astra' },
+});
+
+const matches = vectors.search({
+  collection: 'knowledge',
+  vector: [0.92, 0.85, 0.1],
+  topK: 3,
+});
+```
+
 ---
 
 ## ⚡ Performance Micro-Benchmarks

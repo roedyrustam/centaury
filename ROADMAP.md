@@ -60,3 +60,17 @@
 ### 📦 Phase 8: Package Distribution & CLI (`@centaury/cli`)
 - [x] CLI developer tool `centaury create`, `centaury dev`, dan `centaury doctor`.
 - [x] Dokumentasi publik & lisensi MIT.
+
+### 📡 Phase 9: Native SSE Event Bus (`@centaury-ai/sse`)
+- [x] High-performance O(1) in-memory Event Bus dengan wildcard and ring-buffer history replay.
+- [x] RFC 8895 compliant SSE formatter dengan Bun native ReadableStream generator.
+- [x] Plugin server SSE (`GET /sse/:topic`, `GET /sse`, `GET /sse/_stats`).
+- [x] Typed browser SSE client dengan reconnect back-off otomatis.
+
+### 💾 Phase 10: Bun SQLite & Vector Memory Engine (`@centaury-ai/db`)
+- [x] Native Bun SQLite connection manager dengan WAL mode dan LRU statement caching.
+- [x] Parameterized SQL query builder pencegah SQL injection (`query()`).
+- [x] Migration runner dengan atomic transactional execution (`_centaury_migrations`).
+- [x] Vector Store dengan cosine similarity search Float32Array SIMD (7.5M+ ops/sec).
+- [x] Type-safe Generic Repository pattern (`CentauryRepository<T>`).
+- [x] Integrasi persistent episodic memory & vector search ke AI Agent (`CentauryAgentMemory`).

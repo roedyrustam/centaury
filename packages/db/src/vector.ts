@@ -207,3 +207,4 @@ export class CentauryVectorStore {
     return stmt.get()?.count ?? 0;
   }
 }
+
