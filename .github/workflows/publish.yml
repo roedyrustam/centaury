@@ -48,3 +48,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           CI: "true"
         run: bun run scripts/publish.ts
+
