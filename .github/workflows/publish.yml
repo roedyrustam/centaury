@@ -1,0 +1,50 @@
+name: Centaury Automated NPM Publish
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Build, Verify & Publish to npmjs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun runtime
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build Production Bundles & TypeScript Declarations
+        run: bun run build
+
+      - name: Strict TypeScript Typecheck
+        run: bun run typecheck
+
+      - name: Run Full Test Suite
+        run: bun test
+
+      - name: Publish All Centaury Packages to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          CI: "true"
+        run: bun run scripts/publish.ts

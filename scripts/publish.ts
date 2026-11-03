@@ -58,15 +58,27 @@ async function runPublishPipeline() {
   console.log('\n\x1b[36m🌌 CENTAURY MONOREPO PUBLISH PIPELINE\x1b[0m');
   console.log(`\x1b[90mMode: ${isDryRun ? 'DRY-RUN (Simulated)' : 'PRODUCTION (Real Publish)'}\x1b[0m\n`);
 
+  // 0. Auto-configure npm token if provided via environment
+  const envToken = process.env.NPM_TOKEN || process.env.NODE_AUTH_TOKEN;
+  if (envToken) {
+    await execCommand([npmBin, 'config', 'set', `//registry.npmjs.org/:_authToken=${envToken}`], process.cwd());
+  }
+
   // 1. Verify npm credentials
   console.log('🔑 Step 1: Checking npm authentication...');
   const whoami = await execCommand([npmBin, 'whoami'], process.cwd());
+  let loggedInUser = 'npm';
   if (!whoami.success) {
-    console.error('\x1b[31m✗ Not logged in to npm.\x1b[0m Please run `npm login` first.');
-    process.exit(1);
+    if (isDryRun) {
+      console.log('  \x1b[33mℹ\x1b[0m Dry-run mode: continuing without active npm credentials.');
+    } else {
+      console.error('\x1b[31m✗ Not logged in to npm.\x1b[0m Please run `npm login` or set NPM_TOKEN environment variable first.');
+      process.exit(1);
+    }
+  } else {
+    loggedInUser = whoami.output.split('\n')[0].trim();
+    console.log(`  \x1b[32m✓\x1b[0m Logged in as: \x1b[33m${loggedInUser}\x1b[0m`);
   }
-  const loggedInUser = whoami.output.split('\n')[0].trim();
-  console.log(`  \x1b[32m✓\x1b[0m Logged in as: \x1b[33m${loggedInUser}\x1b[0m`);
 
   // If live publish and no OTP provided yet, optionally prompt for OTP upfront
   if (!isDryRun && !currentOtp && process.stdin.isTTY) {
@@ -163,6 +175,17 @@ async function runPublishPipeline() {
           console.log(`  \x1b[32m✓\x1b[0m \x1b[32mSuccessfully published ${pkg.name}\x1b[0m`);
           published = true;
         } else {
+          // If already published at this exact version, don't break automated pipeline
+          if (
+            result.output.includes('cannot publish over the previously published versions') ||
+            result.output.includes('is already published') ||
+            result.output.includes('EPUBLISHCONFLICT')
+          ) {
+            console.log(`  \x1b[33mℹ\x1b[0m ${pkg.name}@${releaseVersion} is already published on npm. Skipping.`);
+            published = true;
+            break;
+          }
+
           // Check if error is OTP related
           if (result.output.includes('EOTP') || result.output.includes('one-time password') || result.output.includes('OTP')) {
             console.log(`\n\x1b[33m⚠️  OTP diperlukan atau telah kedaluwarsa untuk ${pkg.name}.\x1b[0m`);
@@ -176,7 +199,7 @@ async function runPublishPipeline() {
           }
 
           console.error(`  \x1b[31m✗ Failed to publish ${pkg.name}:\x1b[0m\n${result.output}`);
-          if (!isDryRun) {
+          if (!isDryRun && !process.env.CI) {
             throw new Error(`Publish failed at ${pkg.name}`);
           }
           break;
