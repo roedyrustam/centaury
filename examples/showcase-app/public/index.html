@@ -189,6 +189,32 @@
         </div>
       </section>
 
+      <!-- Column 5: Bun SQLite & Vector Memory Engine -->
+      <section class="glass-card" id="card-db" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            Bun SQLite &amp; Episodic Vector Memory Engine (@centaury-ai/db)
+          </h2>
+          <span class="tag-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">WAL Mode + Vector Cosine Search</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Penyimpanan episodik agen berkecepatan tinggi dengan Bun SQLite natif, Statement Cache, dan pencarian kemiripan vektor Float32Array cosine similarity.
+        </p>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <input type="text" id="input-query-memory" placeholder="Ketik topik untuk pencarian vektor (misal: 'Zero-Hydration' atau 'Gemini')..." style="flex: 1; min-width: 280px; padding: 0.6rem 1rem; border-radius: 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-family: inherit;" value="Zero-Hydration Micro-Signals">
+          <button class="btn" id="btn-recall-memory">
+            🧠 Recall Memory (Cosine Search)
+          </button>
+          <button class="btn btn-secondary" id="btn-db-stats">
+            📊 Database Stats
+          </button>
+        </div>
+
+        <div id="memory-search-results" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.75rem;"></div>
+      </section>
+
     </div>
 
   </main>

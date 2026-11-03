@@ -27,11 +27,12 @@ export interface JsonRpcResponse {
 
 export class CentauryMCPServer {
   public readonly inspector: CentauryInspector = new CentauryInspector();
-  public readonly memory: CentauryAgentMemory = new CentauryAgentMemory();
+  public readonly memory: CentauryAgentMemory;
   private server: CentauryServer;
 
-  constructor(server: CentauryServer) {
+  constructor(server: CentauryServer, memory?: CentauryAgentMemory) {
     this.server = server;
+    this.memory = memory ?? new CentauryAgentMemory();
   }
 
   /**
@@ -105,6 +106,24 @@ export class CentauryMCPServer {
                       markup: { type: 'string', description: 'Declarative Ephemeral DSL component markup' },
                     },
                     required: ['markup'],
+                  },
+                },
+                {
+                  name: 'centaury_recall_memory',
+                  description: 'Recall relevant episodic agent reasoning turns using vector cosine similarity',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      sessionId: { type: 'string', description: 'Session ID to query memory from' },
+                      queryEmbedding: {
+                        type: 'array',
+                        items: { type: 'number' },
+                        description: 'Float vector embedding for cosine similarity matching',
+                      },
+                      topK: { type: 'number', description: 'Maximum number of items to return (default: 3)' },
+                      minScore: { type: 'number', description: 'Minimum similarity score between 0.0 and 1.0 (default: 0.5)' },
+                    },
+                    required: ['sessionId', 'queryEmbedding'],
                   },
                 },
               ],
@@ -220,6 +239,21 @@ export class CentauryMCPServer {
         this.server.broadcast('ephemeral:chunk', { markup });
         this.inspector.log(`Ephemeral UI synthesized by AI Agent: ${markup.slice(0, 40)}...`);
         return { status: 'broadcasted', bytes: markup.length };
+      }
+
+      case 'centaury_recall_memory': {
+        const sessionId = args.sessionId as string;
+        const embedding = args.queryEmbedding as number[];
+        const topK = Number(args.topK) || 3;
+        const minScore = Number(args.minScore) || 0.5;
+        const results = this.memory.recallRelevantTurns(sessionId, embedding, topK, minScore);
+        return results.map((r) => ({
+          id: r.id,
+          score: r.score,
+          content: r.metadata?.content,
+          role: r.metadata?.role,
+          timestamp: r.createdAt,
+        }));
       }
 
       default:

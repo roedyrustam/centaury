@@ -73,6 +73,13 @@
         "typescript": "^5.8.0",
       },
     },
+    "packages/db": {
+      "name": "@centaury-ai/db",
+      "version": "1.0.0-alpha",
+      "peerDependencies": {
+        "typescript": "^5.8.0",
+      },
+    },
     "packages/ephemeral": {
       "name": "@centaury-ai/ephemeral",
       "version": "1.0.0-alpha",
@@ -109,6 +116,8 @@
     "@centaury-ai/cli": ["@centaury-ai/cli@workspace:packages/cli"],
 
     "@centaury-ai/core": ["@centaury-ai/core@workspace:packages/core"],
+
+    "@centaury-ai/db": ["@centaury-ai/db@workspace:packages/db"],
 
     "@centaury-ai/ephemeral": ["@centaury-ai/ephemeral@workspace:packages/ephemeral"],
 

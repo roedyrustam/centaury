@@ -21,9 +21,19 @@
       "@centaury-ai/astra": ["./packages/astra/src/index.ts"],
       "@centaury-ai/agent": ["./packages/agent/src/index.ts"],
       "@centaury-ai/cli": ["./packages/cli/src/index.ts"],
-      "@centaury-ai/sse": ["./packages/sse/src/index.ts"]
+      "@centaury-ai/sse": ["./packages/sse/src/index.ts"],
+      "@centaury-ai/db": ["./packages/db/src/index.ts"],
+      "@centaury-ai/centaury": ["./packages/centaury/src/index.ts"],
+      "@centaury/core": ["./packages/core/src/index.ts"],
+      "@centaury/signals": ["./packages/signals/src/index.ts"],
+      "@centaury/ephemeral": ["./packages/ephemeral/src/index.ts"],
+      "@centaury/astra": ["./packages/astra/src/index.ts"],
+      "@centaury/agent": ["./packages/agent/src/index.ts"],
+      "@centaury/cli": ["./packages/cli/src/index.ts"],
+      "@centaury/sse": ["./packages/sse/src/index.ts"],
+      "@centaury/db": ["./packages/db/src/index.ts"],
+      "@centaury/centaury": ["./packages/centaury/src/index.ts"]
     }
   },
-  "exclude": ["examples", "node_modules"]
+  "exclude": ["examples", "node_modules", "dist-declarations-temp", "packages/*/dist", "dist"]
 }
-

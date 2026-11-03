@@ -62,11 +62,17 @@ async function verifyRelease() {
       '@centaury-ai/ephemeral': [join(process.cwd(), 'packages/ephemeral/src/index.ts')],
       '@centaury-ai/astra': [join(process.cwd(), 'packages/astra/src/index.ts')],
       '@centaury-ai/agent': [join(process.cwd(), 'packages/agent/src/index.ts')],
+      '@centaury-ai/sse': [join(process.cwd(), 'packages/sse/src/index.ts')],
+      '@centaury-ai/db': [join(process.cwd(), 'packages/db/src/index.ts')],
+      '@centaury-ai/centaury': [join(process.cwd(), 'packages/centaury/src/index.ts')],
       '@centaury/core': [join(process.cwd(), 'packages/core/src/index.ts')],
       '@centaury/signals': [join(process.cwd(), 'packages/signals/src/index.ts')],
       '@centaury/ephemeral': [join(process.cwd(), 'packages/ephemeral/src/index.ts')],
       '@centaury/astra': [join(process.cwd(), 'packages/astra/src/index.ts')],
       '@centaury/agent': [join(process.cwd(), 'packages/agent/src/index.ts')],
+      '@centaury/sse': [join(process.cwd(), 'packages/sse/src/index.ts')],
+      '@centaury/db': [join(process.cwd(), 'packages/db/src/index.ts')],
+      '@centaury/centaury': [join(process.cwd(), 'packages/centaury/src/index.ts')],
     };
     await Bun.write(tsConfigFile, JSON.stringify(tsConfig, null, 2));
 

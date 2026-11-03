@@ -21,7 +21,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@centaury-ai/core": "workspace:*"
+    "@centaury-ai/core": "workspace:*",
+    "@centaury-ai/db": "workspace:*"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",

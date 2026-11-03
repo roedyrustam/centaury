@@ -195,7 +195,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 6. Ambient VAD Meter Animation (Simulating Audio Sensor Loop)
+  // 6. SQLite & Vector Memory Engine Handlers
+  const inputQueryMemory = document.getElementById('input-query-memory');
+  const memoryResultsEl = document.getElementById('memory-search-results');
+
+  document.getElementById('btn-recall-memory')?.addEventListener('click', async () => {
+    const q = inputQueryMemory?.value || 'Zero-Hydration';
+    log(`Performing vector cosine similarity recall for: '${q}'...`, 'agent');
+
+    const res = await fetch('/rpc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        procedure: 'agent.recallMemory',
+        input: { query: q },
+      }),
+    });
+
+    const data = await res.json();
+    const payload = data.data;
+
+    if (memoryResultsEl && payload?.matches) {
+      memoryResultsEl.innerHTML = '';
+      if (payload.matches.length === 0) {
+        memoryResultsEl.innerHTML = '<div style="color: #94a3b8; font-size: 0.85rem;">No memory records found above threshold.</div>';
+      } else {
+        payload.matches.forEach((m) => {
+          const card = document.createElement('div');
+          card.style.cssText = 'background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 0.75rem;';
+          card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+              <span style="font-size: 0.75rem; font-weight: bold; color: ${m.role === 'user' ? '#38bdf8' : '#a855f7'}; text-transform: uppercase;">${m.role}</span>
+              <span style="font-size: 0.75rem; color: #10b981; font-family: var(--font-mono);">score: ${m.score}</span>
+            </div>
+            <div style="font-size: 0.85rem; color: #e2e8f0;">${m.content}</div>
+          `;
+          memoryResultsEl.appendChild(card);
+        });
+      }
+      log(`Memory recall complete: ${payload.matches.length} matches retrieved from SQLite Vector Store`, 'success');
+    }
+  });
+
+  document.getElementById('btn-db-stats')?.addEventListener('click', async () => {
+    log('Fetching SQLite Database runtime statistics...', 'event');
+    const res = await fetch('/rpc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ procedure: 'db.getStats' }),
+    });
+    const data = await res.json();
+    log(`[SQLite Stats] ${JSON.stringify(data.data)}`, 'success');
+  });
+
+  // 7. Ambient VAD Meter Animation (Simulating Audio Sensor Loop)
   setInterval(() => {
     const currentText = vadEnergyReading.textContent || '';
     if (!currentText.includes('SPEECH')) {

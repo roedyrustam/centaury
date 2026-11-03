@@ -1,10 +1,10 @@
 # Centaury Framework — Progress Tracker
 
 ## Status Overview
-- **Active Phase**: ALL 9 PHASES 100% COMPLETED + Advanced Capabilities Active! 🚀
-- **Test Pass Rate**: 100% (73/73 tests passing across 7 suites)
+- **Active Phase**: ALL 10 PHASES 100% COMPLETED + Advanced Capabilities Active! 🚀
+- **Test Pass Rate**: 100% (82/82 tests passing across 8 suites)
 - **Typecheck Status**: 0 errors (`tsc --noEmit` strictly clean)
-- **Engine Performance**: 2.63ms cold-start, 13.6M ops/s signal reactivity, 8.3M matches/s Trie router
+- **Engine Performance**: 16.6M ops/s signal reactivity, 10.0M matches/s Trie router, 7.5M ops/s vector cosine similarity, 2.12M queries/s SQLite prepared queries
 - **Showcase Status**: Live at http://localhost:3000
 
 
@@ -96,4 +96,17 @@
 - [x] `CentaurySSEClient` — browser client dengan exponential back-off auto-reconnect, named event types, typed deserialization.
 - [x] Diintegrasikan ke monorepo: build pipeline, umbrella re-exports, `tsconfig.json` paths mapping.
 - [x] 22 unit/integration tests baru lulus (total monorepo: **73/73 pass**), typecheck `tsc --noEmit` **0 errors**.
+
+### Phase 10: Bun SQLite & Vector Memory Engine (`@centaury-ai/db`) [COMPLETED]
+- [x] Paket baru `@centaury-ai/db` dengan arsitektur lengkap (5 modul: `database`, `query-builder`, `migrations`, `vector`, `repository`).
+- [x] `CentauryDatabase` — Bun SQLite micro-kernel dengan WAL mode, foreign keys, synchronous NORMAL, statement cache LRU, dan transactional execution.
+- [x] `CentauryQueryBuilder` / `query()` — parameterized SQL query builder pencegah SQL injection (SELECT, INSERT, UPDATE, DELETE).
+- [x] `CentauryMigrationRunner` — migration runner dengan tabel pelacak versi `_centaury_migrations`, atomic rollback, dan status reporting.
+- [x] `CentauryVectorStore` & Vector Math — cosine similarity, dot product, euclidean distance, Float32Array BLOB serialization, dan semantic similarity top-K search.
+- [x] `CentauryRepository<T>` — Generic Repository pattern type-safe untuk CRUD dan query entity.
+- [x] Integrasi `@centaury-ai/db` ke `@centaury-ai/agent`: `CentauryAgentMemory` dengan backend SQLite persistent + vector recall semantic turns (`recallRelevantTurns`).
+- [x] MCP v1.x Tool baru `centaury_recall_memory` pada `CentauryMCPServer`.
+- [x] Integrasi ke `examples/showcase-app`: Card interaktif SQLite & Vector Memory, RPC `db.getStats`, dan `agent.recallMemory`.
+- [x] Build pipeline `.d.ts` & bundle distribution (`dist/index.js` 9.79 KB).
+- [x] Suite test komprehensif (8 new tests, 48 assertions, 100% pass), total monorepo: **82/82 pass**, typecheck `tsc --noEmit` **0 errors**.
 

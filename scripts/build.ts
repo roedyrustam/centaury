@@ -66,6 +66,13 @@ const builds: BuildConfig[] = [
     target: 'bun',
   },
   {
+    name: 'db',
+    entry: 'packages/db/src/index.ts',
+    pkgDir: 'packages/db',
+    outdir: 'packages/db/dist',
+    target: 'bun',
+  },
+  {
     name: 'centaury',
     entry: 'packages/centaury/src/index.ts',
     pkgDir: 'packages/centaury',

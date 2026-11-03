@@ -25,7 +25,8 @@
     "@centaury-ai/cli": "workspace:*",
     "@centaury-ai/core": "workspace:*",
     "@centaury-ai/signals": "workspace:*",
-    "@centaury-ai/sse": "workspace:*"
+    "@centaury-ai/sse": "workspace:*",
+    "@centaury-ai/db": "workspace:*"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",

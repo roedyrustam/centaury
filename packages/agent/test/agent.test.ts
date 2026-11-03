@@ -160,4 +160,39 @@ describe('@centaury/agent Dual-Citizen MCP v1.x & AST Reflector', () => {
     expect(history[0].content).toBe('Analyze memory leak');
     expect(history[1].role).toBe('agent');
   });
+
+  it('supports persistent SQLite episodic memory with vector cosine recall', () => {
+    const { CentauryDatabase } = require('@centaury-ai/db');
+    const persistentDb = new CentauryDatabase({ path: ':memory:' });
+    const memory = new CentauryAgentMemory({ db: persistentDb });
+
+    // Store turns with embeddings
+    memory.storeTurn(
+      {
+        sessionId: 'sess-vec',
+        role: 'user',
+        content: 'How does Bun Trie routing work?',
+      },
+      [0.9, 0.8, 0.1]
+    );
+
+    memory.storeTurn(
+      {
+        sessionId: 'sess-vec',
+        role: 'user',
+        content: 'Tell me a cake recipe',
+      },
+      [0.1, 0.2, 0.95]
+    );
+
+    // Query semantic similarity for routing
+    const queryVec = [0.88, 0.82, 0.15];
+    const recalled = memory.recallRelevantTurns('sess-vec', queryVec, 1, 0.7);
+
+    expect(recalled.length).toBe(1);
+    expect(recalled[0].metadata?.content).toBe('How does Bun Trie routing work?');
+    expect(recalled[0].score).toBeGreaterThan(0.9);
+
+    persistentDb.close();
+  });
 });

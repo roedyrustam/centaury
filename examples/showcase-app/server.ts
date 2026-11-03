@@ -4,12 +4,16 @@
  */
 
 import { CentauryServer } from '@centaury-ai/core';
-import { CentauryMCPServer } from '@centaury-ai/agent';
+import { CentauryMCPServer, CentauryAgentMemory } from '@centaury-ai/agent';
 import { AstraGateway } from '@centaury-ai/astra';
+import { CentauryDatabase } from '@centaury-ai/db';
 import { z } from 'zod';
 import { join } from 'path';
 
 const PUBLIC_DIR = join(import.meta.dir, 'public');
+
+// Initialize Centaury Database with WAL mode
+const db = new CentauryDatabase({ path: join(import.meta.dir, 'showcase-agent.db') });
 
 // Initialize Centaury Micro-Kernel Server
 const app = new CentauryServer({
@@ -21,8 +25,46 @@ const app = new CentauryServer({
   },
 });
 
-// Initialize Dual-Citizen MCP Server
-const mcp = new CentauryMCPServer(app);
+// Initialize Persistent Episodic Agent Memory backed by SQLite & Vector Store
+const memory = new CentauryAgentMemory({ db });
+const mcp = new CentauryMCPServer(app, memory);
+
+// Helper to generate consistent 64-dim embeddings for demo
+function makeEmbedding(text: string): Float32Array {
+  const vec = new Float32Array(64);
+  for (let i = 0; i < text.length; i++) {
+    vec[i % 64] += text.charCodeAt(i) / 255;
+  }
+  return vec;
+}
+
+// Seed initial reasoning turns for showcase episodic memory
+memory.storeTurn(
+  {
+    sessionId: 'showcase-session',
+    role: 'user',
+    content: 'Explain Centaury Zero-Hydration Micro-Signals and INP target',
+  },
+  makeEmbedding('Explain Centaury Zero-Hydration Micro-Signals and INP target')
+);
+
+memory.storeTurn(
+  {
+    sessionId: 'showcase-session',
+    role: 'agent',
+    content: 'Centaury Micro-Signals run in <1.5KB without Virtual DOM, guaranteeing INP < 50ms.',
+  },
+  makeEmbedding('Centaury Micro-Signals run in <1.5KB without Virtual DOM, guaranteeing INP < 50ms.')
+);
+
+memory.storeTurn(
+  {
+    sessionId: 'showcase-session',
+    role: 'agent',
+    content: 'Gemini 4 Pro System-2 reasoning controls thinking budget up to 64k tokens.',
+  },
+  makeEmbedding('Gemini 4 Pro System-2 reasoning controls thinking budget up to 64k tokens.')
+);
 
 // Initialize Astra Multimodal Gateway
 const astra = new AstraGateway({
@@ -83,6 +125,43 @@ app.rpc('system.getMetrics', {
       activeModel: 'Gemini 4 Pro (Thinking Budget: 32,768)',
       kvCacheStatus: 'Locked (92% Hit Rate)',
       multimodalLatency: '42ms',
+      database: 'Bun SQLite (WAL Mode)',
+    };
+  },
+});
+
+app.rpc('db.getStats', {
+  description: 'Retrieve real-time SQLite database statistics and vector index counts',
+  handler: () => {
+    return {
+      ...db.stats(),
+      vectorCollections: ['agent-turns:showcase-session'],
+    };
+  },
+});
+
+app.rpc('agent.recallMemory', {
+  description: 'Vector cosine similarity search over persistent episodic agent turns',
+  inputSchema: z.object({
+    sessionId: z.string().default('showcase-session'),
+    query: z.string(),
+  }),
+  handler: ({ input }) => {
+    // Generate pseudo-deterministic 64-dim embedding from query string for interactive demo
+    const embedding = new Float32Array(64);
+    for (let i = 0; i < input.query.length; i++) {
+      embedding[i % 64] += input.query.charCodeAt(i) / 255;
+    }
+    const results = memory.recallRelevantTurns(input.sessionId, embedding, 5, 0.0);
+    return {
+      query: input.query,
+      resultsCount: results.length,
+      matches: results.map((r) => ({
+        id: r.id,
+        score: r.score.toFixed(4),
+        role: r.metadata?.role,
+        content: r.metadata?.content,
+      })),
     };
   },
 });

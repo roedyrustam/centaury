@@ -1,0 +1,36 @@
+{
+  "name": "@centaury-ai/db",
+  "version": "1.0.0-alpha",
+  "description": "Native bun:sqlite Database Layer with type-safe query builder, migrations, and repository pattern for Centaury Framework",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "bun test"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.0"
+  },
+  "author": "Roedy Rustam & Antigravity",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roedyrustam/centaury.git",
+    "directory": "packages/db"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
