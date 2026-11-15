@@ -1,5 +1,5 @@
 {
-  "name": "@centaury-ai/cli",
+  "name": "@roedyrustam/cli",
   "version": "1.0.0-alpha",
   "description": "Developer CLI for Centaury Framework",
   "main": "./dist/index.js",
@@ -25,7 +25,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@centaury-ai/core": "workspace:*"
+    "@roedyrustam/core": "workspace:*"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",

@@ -4,7 +4,7 @@
  * Supports both high-speed in-memory session tracking and persistent SQLite + Vector Store RAG.
  */
 
-import { CentauryDatabase, CentauryVectorStore, type ScoredVectorRecord } from '@centaury-ai/db';
+import { CentauryDatabase, CentauryVectorStore, type ScoredVectorRecord } from '@roedyrustam/db';
 
 export interface EpisodicRecord {
   id: string;

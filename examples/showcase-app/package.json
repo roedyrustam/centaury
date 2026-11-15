@@ -7,11 +7,11 @@
     "dev": "bun run server.ts"
   },
   "dependencies": {
-    "@centaury-ai/core": "workspace:*",
-    "@centaury-ai/signals": "workspace:*",
-    "@centaury-ai/ephemeral": "workspace:*",
-    "@centaury-ai/astra": "workspace:*",
-    "@centaury-ai/agent": "workspace:*",
+    "@roedyrustam/core": "workspace:*",
+    "@roedyrustam/signals": "workspace:*",
+    "@roedyrustam/ephemeral": "workspace:*",
+    "@roedyrustam/astra": "workspace:*",
+    "@roedyrustam/agent": "workspace:*",
     "zod": "^3.24.2"
   }
 }

@@ -3,8 +3,8 @@
  * @description Main entry point for Centaury Framework
  */
 
-export * from '@centaury-ai/core';
-export * from '@centaury-ai/signals';
-export * from '@centaury-ai/cli';
-export * from '@centaury-ai/sse';
-export * from '@centaury-ai/db';
+export * from '@roedyrustam/core';
+export * from '@roedyrustam/signals';
+export * from '@roedyrustam/cli';
+export * from '@roedyrustam/sse';
+export * from '@roedyrustam/db';

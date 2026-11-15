@@ -12,14 +12,14 @@ interface PackagePublishTarget {
 }
 
 const packagesToPublish: PackagePublishTarget[] = [
-  { name: '@centaury-ai/core', dir: 'packages/core' },
-  { name: '@centaury-ai/signals', dir: 'packages/signals' },
-  { name: '@centaury-ai/ephemeral', dir: 'packages/ephemeral' },
-  { name: '@centaury-ai/astra', dir: 'packages/astra' },
-  { name: '@centaury-ai/sse', dir: 'packages/sse' },
-  { name: '@centaury-ai/db', dir: 'packages/db' },
-  { name: '@centaury-ai/agent', dir: 'packages/agent' },
-  { name: '@centaury-ai/cli', dir: 'packages/cli' },
+  { name: '@roedyrustam/core', dir: 'packages/core' },
+  { name: '@roedyrustam/signals', dir: 'packages/signals' },
+  { name: '@roedyrustam/ephemeral', dir: 'packages/ephemeral' },
+  { name: '@roedyrustam/astra', dir: 'packages/astra' },
+  { name: '@roedyrustam/sse', dir: 'packages/sse' },
+  { name: '@roedyrustam/db', dir: 'packages/db' },
+  { name: '@roedyrustam/agent', dir: 'packages/agent' },
+  { name: '@roedyrustam/cli', dir: 'packages/cli' },
   { name: 'centaury', dir: 'packages/centaury' },
 ];
 

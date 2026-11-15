@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Public API exports for @centaury-ai/sse
+ * @description Public API exports for @roedyrustam/sse
  */
 
 // Core Event Bus

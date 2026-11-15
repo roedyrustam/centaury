@@ -57,14 +57,14 @@ async function verifyRelease() {
     const tsConfig = JSON.parse(await Bun.file(tsConfigFile).text());
     tsConfig.compilerOptions.baseUrl = '.';
     tsConfig.compilerOptions.paths = {
-      '@centaury-ai/core': [join(process.cwd(), 'packages/core/src/index.ts')],
-      '@centaury-ai/signals': [join(process.cwd(), 'packages/signals/src/index.ts')],
-      '@centaury-ai/ephemeral': [join(process.cwd(), 'packages/ephemeral/src/index.ts')],
-      '@centaury-ai/astra': [join(process.cwd(), 'packages/astra/src/index.ts')],
-      '@centaury-ai/agent': [join(process.cwd(), 'packages/agent/src/index.ts')],
-      '@centaury-ai/sse': [join(process.cwd(), 'packages/sse/src/index.ts')],
-      '@centaury-ai/db': [join(process.cwd(), 'packages/db/src/index.ts')],
-      '@centaury-ai/centaury': [join(process.cwd(), 'packages/centaury/src/index.ts')],
+      '@roedyrustam/core': [join(process.cwd(), 'packages/core/src/index.ts')],
+      '@roedyrustam/signals': [join(process.cwd(), 'packages/signals/src/index.ts')],
+      '@roedyrustam/ephemeral': [join(process.cwd(), 'packages/ephemeral/src/index.ts')],
+      '@roedyrustam/astra': [join(process.cwd(), 'packages/astra/src/index.ts')],
+      '@roedyrustam/agent': [join(process.cwd(), 'packages/agent/src/index.ts')],
+      '@roedyrustam/sse': [join(process.cwd(), 'packages/sse/src/index.ts')],
+      '@roedyrustam/db': [join(process.cwd(), 'packages/db/src/index.ts')],
+      '@roedyrustam/centaury': [join(process.cwd(), 'packages/centaury/src/index.ts')],
       '@centaury/core': [join(process.cwd(), 'packages/core/src/index.ts')],
       '@centaury/signals': [join(process.cwd(), 'packages/signals/src/index.ts')],
       '@centaury/ephemeral': [join(process.cwd(), 'packages/ephemeral/src/index.ts')],

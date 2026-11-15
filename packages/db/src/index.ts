@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Public exports for @centaury-ai/db
+ * @description Public exports for @roedyrustam/db
  */
 
 export * from './database';

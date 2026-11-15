@@ -162,7 +162,7 @@ describe('@centaury/agent Dual-Citizen MCP v1.x & AST Reflector', () => {
   });
 
   it('supports persistent SQLite episodic memory with vector cosine recall', () => {
-    const { CentauryDatabase } = require('@centaury-ai/db');
+    const { CentauryDatabase } = require('@roedyrustam/db');
     const persistentDb = new CentauryDatabase({ path: ':memory:' });
     const memory = new CentauryAgentMemory({ db: persistentDb });
 

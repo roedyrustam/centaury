@@ -4,7 +4,7 @@
  * registers the /sse/:topic streaming endpoint, and exposes bus lifecycle management APIs.
  *
  * Usage:
- *   import { ssePlugin, CentauryEventBus } from '@centaury-ai/sse';
+ *   import { ssePlugin, CentauryEventBus } from '@roedyrustam/sse';
  *
  *   const bus = new CentauryEventBus();
  *   app.usePlugin(ssePlugin(bus));
@@ -13,7 +13,7 @@
  *   bus.publish('orders', { data: { id: 'ord_123', status: 'filled' } });
  */
 
-import type { CentauryPlugin, CentauryServer } from '@centaury-ai/core';
+import type { CentauryPlugin, CentauryServer } from '@roedyrustam/core';
 import { CentauryEventBus } from './event-bus';
 import { createSseResponse } from './sse-handler';
 

@@ -11,7 +11,7 @@
  *   \n
  */
 
-import type { CentauryContext } from '@centaury-ai/core';
+import type { CentauryContext } from '@roedyrustam/core';
 import { CentauryEventBus, type SseEvent } from './event-bus';
 
 export interface SseHandlerOptions {
