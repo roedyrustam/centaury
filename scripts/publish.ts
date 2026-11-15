@@ -54,6 +54,155 @@ async function execCommand(command: string[], cwd: string): Promise<{ success: b
   };
 }
 
+interface StagedPackageEntry {
+  id: string;
+  packageName: string;
+  version: string;
+  status: string;
+}
+
+async function isPackagePublishedOnNpm(pkgName: string, version: string): Promise<boolean> {
+  try {
+    const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(pkgName)}`);
+    if (!res.ok) return false;
+    const data = (await res.json()) as { versions?: Record<string, unknown> };
+    return Boolean(data?.versions && Object.prototype.hasOwnProperty.call(data.versions, version));
+  } catch {
+    return false;
+  }
+}
+
+function readNpmAuthToken(): string | null {
+  const envToken = process.env.NPM_TOKEN || process.env.NODE_AUTH_TOKEN;
+  if (envToken) return envToken.trim();
+
+  const homeDir = process.env.USERPROFILE || process.env.HOME || '';
+  const candidates = [join(process.cwd(), '.npmrc'), homeDir ? join(homeDir, '.npmrc') : ''].filter(Boolean);
+
+  for (const rcPath of candidates) {
+    if (!existsSync(rcPath)) continue;
+    const raw = readFileSync(rcPath, 'utf-8');
+    const registryMatch = raw.match(/\/\/registry\.npmjs\.org\/:_authToken=(.+)/);
+    const genericMatch = raw.match(/^_authToken=(.+)$/m);
+    const value = (registryMatch?.[1] || genericMatch?.[1] || '').trim().replace(/^["']|["']$/g, '');
+    if (value && !value.startsWith('${')) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function parseStagedPackages(output: string): StagedPackageEntry[] {
+  if (!output) return [];
+  const entries: StagedPackageEntry[] = [];
+  for (const block of output.split(/\r?\n\s*\r?\n/)) {
+    const id = block.match(/^id:\s*(.+)$/m)?.[1]?.trim();
+    const packageName = block.match(/^package name:\s*(.+)$/m)?.[1]?.trim();
+    const version = block.match(/^version:\s*(.+)$/m)?.[1]?.trim();
+    const status = block.match(/^status:\s*(.+)$/m)?.[1]?.trim() || '';
+    if (id && packageName && version) {
+      entries.push({ id, packageName, version, status });
+    }
+  }
+  return entries;
+}
+
+function openBrowserUrl(url: string): void {
+  try {
+    if (process.platform === 'win32') {
+      Bun.spawn(['cmd', '/c', 'start', '', url], { stdio: ['ignore', 'ignore', 'ignore'] });
+    } else if (process.platform === 'darwin') {
+      Bun.spawn(['open', url], { stdio: ['ignore', 'ignore', 'ignore'] });
+    } else {
+      Bun.spawn(['xdg-open', url], { stdio: ['ignore', 'ignore', 'ignore'] });
+    }
+  } catch {
+    // Non-fatal: URL is still printed to console
+  }
+}
+
+async function approveStagedPackage(
+  stageId: string,
+  pkgName: string,
+  token: string,
+  cachedOtp: string | null
+): Promise<{ approved: boolean; otp: string | null; error?: string }> {
+  const approveUrl = `https://registry.npmjs.org/-/stage/${stageId}/approve`;
+  const npmSession = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+  const baseHeaders: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/json',
+    'npm-auth-type': 'web',
+    'npm-command': 'stage',
+    'npm-session': npmSession,
+    'user-agent': 'npm/12.2.2 node/v22.17.1 win32 x64 workspaces/false',
+  };
+  let activeOtp = cachedOtp;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const headers: Record<string, string> = { ...baseHeaders };
+    if (activeOtp) {
+      headers['npm-otp'] = activeOtp;
+    }
+
+    const res = await fetch(approveUrl, { method: 'POST', headers });
+    if (res.ok) {
+      return { approved: true, otp: activeOtp };
+    }
+
+    const bodyText = await res.text();
+    let bodyJson: { authUrl?: string; doneUrl?: string; code?: string; error?: string } | null = null;
+    try {
+      bodyJson = JSON.parse(bodyText);
+    } catch {
+      bodyJson = null;
+    }
+
+    if (res.status === 401 && bodyJson?.authUrl && bodyJson?.doneUrl) {
+      activeOtp = null;
+      console.log(`\n  🔐 Approval 2FA required for \x1b[33m${pkgName}\x1b[0m (${stageId}).`);
+      console.log(`  🌐 Opening browser: \x1b[36m${bodyJson.authUrl}\x1b[0m`);
+      openBrowserUrl(bodyJson.authUrl);
+
+      const deadline = Date.now() + 180_000;
+      let retrievedOtp: string | null = null;
+
+      while (Date.now() < deadline) {
+        const doneRes = await fetch(bodyJson.doneUrl, {
+          headers: baseHeaders,
+        });
+        if (doneRes.status === 200) {
+          const doneJson = (await doneRes.json()) as { token?: string };
+          if (doneJson?.token) {
+            retrievedOtp = doneJson.token;
+            break;
+          }
+          return { approved: false, otp: null, error: `Auth done endpoint returned 200 without token: ${JSON.stringify(doneJson)}` };
+        }
+        if (doneRes.status !== 202) {
+          const doneErr = await doneRes.text();
+          return { approved: false, otp: null, error: `Auth polling failed (${doneRes.status}): ${doneErr}` };
+        }
+
+        const retryAfterSec = Number(doneRes.headers.get('retry-after'));
+        const delayMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0 ? Math.min(retryAfterSec * 1000, 5000) : 1500;
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+
+      if (!retrievedOtp) {
+        return { approved: false, otp: null, error: `Timed out waiting for browser 2FA approval for ${pkgName}` };
+      }
+
+      activeOtp = retrievedOtp;
+      continue;
+    }
+
+    return { approved: false, otp: activeOtp, error: `HTTP ${res.status}: ${bodyText}` };
+  }
+
+  return { approved: false, otp: activeOtp, error: 'Exceeded max approval retries after 2FA.' };
+}
+
 async function runPublishPipeline() {
   console.log('\n\x1b[36m🌌 CENTAURY MONOREPO PUBLISH PIPELINE\x1b[0m');
   console.log(`\x1b[90mMode: ${isDryRun ? 'DRY-RUN (Simulated)' : 'PRODUCTION (Real Publish)'}\x1b[0m\n`);
@@ -158,21 +307,22 @@ async function runPublishPipeline() {
     const stageListPre = isDryRun
       ? { success: false, output: '' }
       : await execCommand([bunxBin, 'npm@latest', 'stage', 'list'], process.cwd());
-    const preStagedBlocks = stageListPre.output
-      ? stageListPre.output.split(/\r?\n\s*\r?\n/)
-      : [];
+    const preStagedEntries = parseStagedPackages(stageListPre.output);
 
     for (const pkg of packagesToPublish) {
       const pkgDir = join(process.cwd(), pkg.dir);
       if (!existsSync(pkgDir)) continue;
 
-      const alreadyStaged = preStagedBlocks.some(
-        (block) =>
-          block.includes(`package name: ${pkg.name}`) &&
-          block.includes(`version: ${releaseVersion}`)
+      if (!isDryRun && (await isPackagePublishedOnNpm(pkg.name, releaseVersion))) {
+        console.log(`  \x1b[32m✓\x1b[0m ${pkg.name}@${releaseVersion} is already published live on npm. Skipping.`);
+        continue;
+      }
+
+      const alreadyStaged = preStagedEntries.some(
+        (entry) => entry.packageName === pkg.name && entry.version === releaseVersion
       );
       if (alreadyStaged) {
-        console.log(`  \x1b[33mℹ\x1b[0m ${pkg.name}@${releaseVersion} is already staged on npm. Skipping.`);
+        console.log(`  \x1b[33mℹ\x1b[0m ${pkg.name}@${releaseVersion} is already staged on npm. Skipping upload.`);
         continue;
       }
 
@@ -285,15 +435,52 @@ async function runPublishPipeline() {
       }
     }
 
-    if (stagedCount > 0) {
-      console.log(`\n📋 Listing staged packages on npm (${stagedCount} staged)...`);
-      const stageList = await execCommand([bunxBin, 'npm@latest', 'stage', 'list'], process.cwd());
-      if (stageList.output) {
-        console.log(stageList.output);
+    if (!isDryRun) {
+      let currentStaged = stagedCount > 0
+        ? parseStagedPackages((await execCommand([bunxBin, 'npm@latest', 'stage', 'list'], process.cwd())).output)
+        : preStagedEntries;
+
+      const pendingApprovals = packagesToPublish
+        .map((pkg) => {
+          const match = currentStaged.find(
+            (entry) => entry.packageName === pkg.name && entry.version === releaseVersion
+          );
+          return match ? { pkg, entry: match } : null;
+        })
+        .filter((item): item is { pkg: PackagePublishTarget; entry: StagedPackageEntry } => item !== null);
+
+      if (pendingApprovals.length > 0) {
+        console.log(`\n🔐 Step 5: Approving ${pendingApprovals.length} staged package(s) on npm...`);
+        const npmToken = readNpmAuthToken();
+        if (!npmToken) {
+          throw new Error('Could not find npm _authToken in environment or .npmrc to approve staged packages.');
+        }
+
+        let cachedWebOtp: string | null = currentOtp;
+
+        for (const { pkg, entry } of pendingApprovals) {
+          let activeEntry = entry;
+          if (activeEntry.status === 'validating') {
+            console.log(`  ⏳ Waiting for npm validation on ${pkg.name} (${activeEntry.id})...`);
+            for (let w = 0; w < 10 && activeEntry.status === 'validating'; w++) {
+              await new Promise((r) => setTimeout(r, 2000));
+              const refreshed = parseStagedPackages(
+                (await execCommand([bunxBin, 'npm@latest', 'stage', 'list'], process.cwd())).output
+              );
+              const found = refreshed.find((e) => e.id === activeEntry.id);
+              if (found) activeEntry = found;
+            }
+          }
+
+          console.log(`  🚀 Approving \x1b[33m${pkg.name}@${releaseVersion}\x1b[0m (${activeEntry.id})...`);
+          const approval = await approveStagedPackage(activeEntry.id, pkg.name, npmToken, cachedWebOtp);
+          if (!approval.approved) {
+            throw new Error(`Stage approval failed for ${pkg.name} (${activeEntry.id}): ${approval.error}`);
+          }
+          cachedWebOtp = approval.otp;
+          console.log(`  \x1b[32m✓\x1b[0m Approved and published \x1b[32m${pkg.name}@${releaseVersion}\x1b[0m (stage ${activeEntry.id})!`);
+        }
       }
-      console.log(
-        '\n\x1b[33mℹ️  Packages are staged on npm. Review and approve them via `npm stage approve <stage-id>` or on npmjs.com.\x1b[0m'
-      );
     }
 
     console.log(`\n\x1b[32m✨ All packages published successfully to https://www.npmjs.com/~${loggedInUser} !\x1b[0m\n`);
