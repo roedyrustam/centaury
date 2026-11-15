@@ -1,6 +1,6 @@
 {
   "name": "@rudyrustam/sse",
-  "version": "1.0.0-alpha",
+  "version": "1.1.0-alpha",
   "description": "Native Bun SSE Event Bus with topic-based pub/sub, retry logic, and auto-reconnect for Centaury Framework",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

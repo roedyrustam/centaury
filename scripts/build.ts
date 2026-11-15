@@ -73,6 +73,20 @@ const builds: BuildConfig[] = [
     target: 'bun',
   },
   {
+    name: 'auth',
+    entry: 'packages/auth/src/index.ts',
+    pkgDir: 'packages/auth',
+    outdir: 'packages/auth/dist',
+    target: 'bun',
+  },
+  {
+    name: 'workflow',
+    entry: 'packages/workflow/src/index.ts',
+    pkgDir: 'packages/workflow',
+    outdir: 'packages/workflow/dist',
+    target: 'bun',
+  },
+  {
     name: 'centaury',
     entry: 'packages/centaury/src/index.ts',
     pkgDir: 'packages/centaury',

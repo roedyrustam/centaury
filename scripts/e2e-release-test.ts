@@ -64,6 +64,8 @@ async function verifyRelease() {
       '@rudyrustam/agent': [join(process.cwd(), 'packages/agent/src/index.ts')],
       '@rudyrustam/sse': [join(process.cwd(), 'packages/sse/src/index.ts')],
       '@rudyrustam/db': [join(process.cwd(), 'packages/db/src/index.ts')],
+      '@rudyrustam/auth': [join(process.cwd(), 'packages/auth/src/index.ts')],
+      '@rudyrustam/workflow': [join(process.cwd(), 'packages/workflow/src/index.ts')],
       '@rudyrustam/centaury': [join(process.cwd(), 'packages/centaury/src/index.ts')],
       '@centaury/core': [join(process.cwd(), 'packages/core/src/index.ts')],
       '@centaury/signals': [join(process.cwd(), 'packages/signals/src/index.ts')],
@@ -72,6 +74,8 @@ async function verifyRelease() {
       '@centaury/agent': [join(process.cwd(), 'packages/agent/src/index.ts')],
       '@centaury/sse': [join(process.cwd(), 'packages/sse/src/index.ts')],
       '@centaury/db': [join(process.cwd(), 'packages/db/src/index.ts')],
+      '@centaury/auth': [join(process.cwd(), 'packages/auth/src/index.ts')],
+      '@centaury/workflow': [join(process.cwd(), 'packages/workflow/src/index.ts')],
       '@centaury/centaury': [join(process.cwd(), 'packages/centaury/src/index.ts')],
     };
     await Bun.write(tsConfigFile, JSON.stringify(tsConfig, null, 2));

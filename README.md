@@ -9,7 +9,7 @@
 
 [![GitHub Stars](https://img.shields.io/github/stars/roedyrustam/centaury?style=for-the-badge&logo=github&color=06b6d4)](https://github.com/roedyrustam/centaury/stargazers)
 [![CI Quality Gate](https://img.shields.io/github/actions/workflow/status/roedyrustam/centaury/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=CI%20Gate&color=10b981)](https://github.com/roedyrustam/centaury/actions)
-[![Tests Passing](https://img.shields.io/badge/tests-51%2F51%20passing-10b981.svg?style=for-the-badge&logo=bun)](https://github.com/roedyrustam/centaury)
+[![Tests Passing](https://img.shields.io/badge/tests-92%2F92%20passing-10b981.svg?style=for-the-badge&logo=bun)](https://github.com/roedyrustam/centaury)
 [![Runtime](https://img.shields.io/badge/Runtime-Bun%201.3%2B-f472b6.svg?style=for-the-badge&logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8%20Strict-3178c6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-v1.x%20Dual--Citizen-8b5cf6.svg?style=for-the-badge)](https://modelcontextprotocol.io/)
@@ -110,13 +110,13 @@ bun run dev
 
 ---
 
-## 🧩 The 6 Monorepo Packages
+## 🧩 The 11 Monorepo Packages (`@rudyrustam/*`)
 
-### 1. `@centaury/core` — High-Throughput Micro-Kernel
+### 1. `@rudyrustam/core` — High-Throughput Micro-Kernel
 The ultra-fast HTTP & WebSocket engine powered by Bun's native runtime.
 
 ```ts
-import { CentauryApp, securityHeadersPlugin, rateLimiterPlugin } from '@centaury/core';
+import { CentauryServer, securityHeadersPlugin, rateLimiterPlugin } from '@rudyrustam/core';
 import { z } from 'zod';
 
 const app = new CentauryApp({ port: 3000 });
@@ -137,12 +137,12 @@ app.rpc('generateAnalysis', {
 app.listen();
 ```
 
-### 2. `@centaury/signals` — Zero-Hydration Client Reactive Engine
+### 2. `@rudyrustam/signals` — Zero-Hydration Client Reactive Engine
 Ultra-lightweight (<1.5KB) atomic reactive primitives with direct DOM bindings.
 
 ```html
 <script type="module">
-  import { signal, persistedSignal, bindText, bindModel } from '@centaury/signals';
+  import { signal, persistedSignal, bindText, bindModel } from '@rudyrustam/signals';
 
   // Atomic & Cross-Tab Persisted State
   const counter = signal(0, 'counterSignal');
@@ -156,11 +156,11 @@ Ultra-lightweight (<1.5KB) atomic reactive primitives with direct DOM bindings.
 <c-devtools></c-devtools>
 ```
 
-### 3. `@centaury/ephemeral` — Streaming Generative UI Synthesizer
+### 3. `@rudyrustam/ephemeral` — Streaming Generative UI Synthesizer
 Directly renders dynamic UI components generated on-the-fly by frontier models like Gemini 4 Pro with zero-eval AST safety.
 
 ```ts
-import { EphemeralStreamParser, mountEphemeralUI } from '@centaury/ephemeral';
+import { EphemeralStreamParser, mountEphemeralUI } from '@rudyrustam/ephemeral';
 
 const parser = new EphemeralStreamParser();
 const container = document.getElementById('ai-interface-root');
@@ -177,11 +177,11 @@ container.addEventListener('ephemeral:action', (e) => {
 });
 ```
 
-### 4. `@centaury/astra` — Project Astra Multimodal Gateway
+### 4. `@rudyrustam/astra` — Project Astra Multimodal Gateway
 Continuous bidirectional PCM audio streaming, Voice Activity Detection, sub-150ms interruption detection, and spatial visual grounding.
 
 ```ts
-import { AstraAudioPipeline, AstraVisionPipeline } from '@centaury/astra';
+import { AstraAudioPipeline, AstraVisionPipeline } from '@rudyrustam/astra';
 
 const audio = new AstraAudioPipeline({ sampleRate: 16000 });
 const vision = new AstraVisionPipeline();
@@ -197,59 +197,53 @@ audio.onVoiceActivity((energy) => {
 const targetBox = vision.mapNormalizedToPixels({ ymin: 200, xmin: 150, ymax: 400, xmax: 600 }, 1920, 1080);
 ```
 
-### 5. `@centaury/agent` — Dual-Citizen MCP v1.x Server
-Official Model Context Protocol server exposing endpoints at `/.well-known/mcp.json`.
+### 5. `@rudyrustam/agent` — Dual-Citizen MCP v1.x, Prompt Firewall & Self-Healer
+Official Model Context Protocol server (`/.well-known/mcp.json`), runtime `CentauryPromptFirewall` (injection/SSRF/PII guard + `centaury_audit_prompt`), and autonomous `CentaurySelfHealer` + `selfHealingPlugin` (`/_heal/diagnostics`).
 
 ```ts
-import { CentauryMcpServer, CentauryInspector } from '@centaury/agent';
+import { CentauryMCPServer, CentauryPromptFirewall, selfHealingPlugin } from '@rudyrustam/agent';
 
-const mcp = new CentauryMcpServer();
-mcp.registerTool({
-  name: 'centaury_get_system_snapshot',
-  description: 'Inspect live Centaury runtime memory and routes',
-  handler: async () => ({ status: 'healthy', memory: process.memoryUsage() }),
-});
+app.usePlugin(selfHealingPlugin());
+const mcp = new CentauryMCPServer(app);
+const verdict = new CentauryPromptFirewall().inspectPrompt(userInput);
 ```
 
-### 6. `@centaury/cli` — Developer Tooling
+### 6. `@rudyrustam/cli` — Developer Tooling
 Binary CLI `centaury` providing fast project scaffolding, local auto-reloading dev server, and diagnostic health audits.
 
 ```bash
-centaury create <app-name> [--template minimal|fullstack|agentic] [--install]
-centaury dev
-centaury doctor
+bunx centaury create <app-name> [--template minimal|fullstack|agentic] [--install]
+bunx centaury dev
+bunx centaury doctor
 ```
 
-### 7. `@centaury-ai/db` — Bun SQLite & Vector Memory Engine
-Native `bun:sqlite` database micro-kernel with WAL mode, parameterized query builder, migrations, and Float32Array SIMD vector cosine similarity search for agentic RAG and episodic memory.
+### 7. `@rudyrustam/db` — Bun SQLite & Vector Memory Engine
+Native `bun:sqlite` database micro-kernel with WAL mode, parameterized query builder, migrations, and Float32Array SIMD vector cosine similarity search (`7.5M+ ops/sec`).
 
 ```ts
-import { CentauryDatabase, query, CentauryVectorStore } from '@centaury-ai/db';
+import { CentauryDatabase, query, CentauryVectorStore } from '@rudyrustam/db';
 
 const db = new CentauryDatabase({ path: './app.db', wal: true });
-
-// Type-safe, SQL-injection proof parameterized queries
-const users = query(db)
-  .select(['id', 'name'])
-  .from('users')
-  .where('status = ?', 'active')
-  .all();
-
-// High-speed SQLite Vector Store (7.5M+ ops/sec cosine similarity)
-const vectors = new CentauryVectorStore(db);
-vectors.upsert({
-  id: 'doc-1',
-  collection: 'knowledge',
-  embedding: [0.95, 0.82, 0.11],
-  metadata: { title: 'Project Astra' },
-});
-
-const matches = vectors.search({
-  collection: 'knowledge',
-  vector: [0.92, 0.85, 0.1],
-  topK: 3,
-});
+const users = query(db).select(['id', 'name']).from('users').where('status = ?', 'active').all();
 ```
+
+### 8. `@rudyrustam/sse` — Native SSE Event Bus
+O(1) topic pub/sub (`CentauryEventBus`), ring-buffer history replay, `ssePlugin()`, and reconnecting `CentaurySSEClient`.
+
+### 9. `@rudyrustam/auth` — Zero-Trust Auth, Passkeys & Legal Compliance Trio
+Web Crypto HS256 JWT tokens, PBKDF2-SHA256 hashing, RBAC/ReBAC (`CentauryAccessControl`), WebAuthn Passkey challenges (`CentauryPasskeyManager`), and mandatory legal/privacy routes (`legalCompliancePlugin` -> `/privacy`, `/terms`, `/delete-account`, `POST /api/compliance/delete-account`).
+
+```ts
+import { signToken, CentauryAccessControl, createAuthMiddleware, legalCompliancePlugin } from '@rudyrustam/auth';
+
+app.usePlugin(legalCompliancePlugin({ appName: 'My Centaury App', contactEmail: 'privacy@example.com' }));
+```
+
+### 10. `@rudyrustam/workflow` — A2A Multi-Agent Swarm & Durable Saga Engine
+Agent-to-Agent discovery (`/.well-known/agent.json`), task lifecycle endpoints (`/a2a/tasks/*`), and SQLite-backed durable workflows with deterministic replay and reverse-order Saga compensation (`CentauryWorkflowEngine`).
+
+### 11. `@rudyrustam/centaury` — Umbrella Framework Meta-Package
+Re-exports `@rudyrustam/core`, `@rudyrustam/signals`, `@rudyrustam/cli`, `@rudyrustam/sse`, `@rudyrustam/db`, `@rudyrustam/auth`, and `@rudyrustam/workflow` from a single import.
 
 ---
 
@@ -293,7 +287,7 @@ Navigate to **`http://localhost:3000`** to experience:
 Centaury enforces strict quality gates across all packages:
 
 ```bash
-# Run all 51 unit & integration tests
+# Run all 92 unit & integration tests
 bun test
 
 # Strict TypeScript typechecking (0 errors)

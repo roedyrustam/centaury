@@ -1,10 +1,10 @@
 # Product Requirements Document (PRD) — Centaury Framework
-**Project**: Centaury Framework (`@centaury/core`)  
-**Version**: 1.0.0-alpha  
+**Project**: Centaury Framework (`@rudyrustam/centaury` / `@rudyrustam/core`)  
+**Version**: 1.1.0-alpha  
 **Status**: Approved  
 **Author**: Antigravity Principal Architect & Roedy Rustam  
 **Created**: 2026-10-07  
-**Last Updated**: 2026-10-07  
+**Last Updated**: 2026-11-15  
 
 ---
 
@@ -69,13 +69,22 @@ Centaury is an autonomous, ultra-lightweight fullstack web and agentic framework
 4. **Multimodal Astra Gateway (`@centaury/astra`)**:
    - Bi-directional audio/video WebSockets connector for Gemini Multimodal Live API.
    - Sub-150ms interruption handling and live screen-grounding coordinates mapping.
-5. **Agentic Introspection & MCP v1.x Server (`@centaury/agent`)**:
+5. **Agentic Introspection & MCP v1.x Server (`@rudyrustam/agent`)**:
    - Built-in Model Context Protocol endpoint (`/.well-known/mcp.json`).
-   - Exposes live route schemas, database queries, and log streams directly to AI agents.
+   - Exposes live route schemas, database queries, log streams, Prompt Firewall audits (`centaury_audit_prompt`), and Self-Healer diagnostics (`/_heal/diagnostics`).
+6. **Zero-Trust Auth, Passkeys & Legal Compliance Trio (`@rudyrustam/auth`)**:
+   - Web Crypto HS256 JWT tokens, PBKDF2 password hashing, RBAC/ReBAC access control, and WebAuthn Passkeys challenge management.
+   - Mandatory Legal & Privacy Trio endpoints out of the box: `GET /privacy`, `GET /terms`, `GET /delete-account`, and `POST /api/compliance/delete-account` (UU PDP No. 27/2022, GDPR Art. 17, Apple App Store 5.1.1(v), Google Play Data Safety).
+7. **A2A Multi-Agent Swarm & Durable Workflows (`@rudyrustam/workflow`)**:
+   - Agent-to-Agent discovery (`GET /.well-known/agent.json`) and task lifecycle (`/a2a/tasks/send`, `/a2a/tasks/:id`, `/a2a/tasks/:id/cancel`).
+   - SQLite-backed durable workflow checkpoints and reverse-order Saga compensation.
+
+### Monorepo Package Suite (`@rudyrustam/*`, 11 Packages)
+- `@rudyrustam/core`, `@rudyrustam/signals`, `@rudyrustam/ephemeral`, `@rudyrustam/astra`, `@rudyrustam/sse`, `@rudyrustam/db`, `@rudyrustam/auth`, `@rudyrustam/workflow`, `@rudyrustam/agent`, `@rudyrustam/cli`, `@rudyrustam/centaury` (umbrella).
 
 ### Phase 2 Features (v1.x)
 - Embedded WASM Small Language Model (SLM) runner for local-first zero-latency edge inference.
-- Autonomous self-healing runtime with AST diff generation upon uncaught server exceptions.
+- Autonomous AST source hot-patching atop Self-Healer diagnostics.
 
 ---
 

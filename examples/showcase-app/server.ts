@@ -4,9 +4,17 @@
  */
 
 import { CentauryServer } from '@rudyrustam/core';
-import { CentauryMCPServer, CentauryAgentMemory } from '@rudyrustam/agent';
+import {
+  CentauryMCPServer,
+  CentauryAgentMemory,
+  CentauryPromptFirewall,
+  CentaurySelfHealer,
+  selfHealingPlugin,
+} from '@rudyrustam/agent';
 import { AstraGateway } from '@rudyrustam/astra';
 import { CentauryDatabase } from '@rudyrustam/db';
+import { legalCompliancePlugin } from '@rudyrustam/auth';
+import { a2aPlugin, CentauryWorkflowEngine } from '@rudyrustam/workflow';
 import { z } from 'zod';
 import { join } from 'path';
 
@@ -27,7 +35,36 @@ const app = new CentauryServer({
 
 // Initialize Persistent Episodic Agent Memory backed by SQLite & Vector Store
 const memory = new CentauryAgentMemory({ db });
-const mcp = new CentauryMCPServer(app, memory);
+const firewall = new CentauryPromptFirewall();
+const healer = new CentaurySelfHealer();
+const mcp = new CentauryMCPServer(app, memory, { firewall, healer });
+const workflowEngine = new CentauryWorkflowEngine({ db });
+
+// Install Self-Healing, Mandatory Legal Compliance Trio, and A2A Interoperability Plugins
+app.usePlugin(selfHealingPlugin(healer));
+app.usePlugin(
+  legalCompliancePlugin({
+    appName: 'Centaury Showcase',
+    contactEmail: 'privacy@centaury.dev',
+  })
+);
+app.usePlugin(
+  a2aPlugin({
+    name: 'Centaury Showcase Agent',
+    description: 'Dual-Citizen Fullstack, Guardrail & Durable Workflow Agent',
+    skills: [
+      {
+        id: 'audit_prompt',
+        name: 'Audit Prompt Safety',
+        description: 'Inspect prompt payloads for injection, SSRF, and PII leakage',
+        handler: (input) => {
+          const payload = input as { prompt?: string };
+          return firewall.inspectPrompt(String(payload?.prompt ?? ''));
+        },
+      },
+    ],
+  })
+);
 
 // Helper to generate consistent 64-dim embeddings for demo
 function makeEmbedding(text: string): Float32Array {
@@ -230,6 +267,38 @@ app.rpc('astra.simulateGrounding', {
       { ymin: 180, xmin: 520, ymax: 560, xmax: 950, label: 'Ephemeral Synthesizer' },
     ];
     return astra.createGroundingPayload(sampleBoxes, 1200, 800);
+  },
+});
+
+app.rpc('agent.auditPrompt', {
+  description: 'Inspect incoming prompts for prompt injection, SSRF targets, and PII redaction',
+  inputSchema: z.object({
+    prompt: z.string().min(1),
+  }),
+  handler: ({ input }) => {
+    return firewall.inspectPrompt(input.prompt);
+  },
+});
+
+app.rpc('workflow.runDemo', {
+  description: 'Execute a checkpointed SQLite durable workflow demo with automatic rollback support',
+  inputSchema: z.object({
+    runId: z.string().default(() => `demo-${crypto.randomUUID().slice(0, 8)}`),
+    task: z.string().default('verify-system'),
+  }),
+  handler: async ({ input }) => {
+    const demoFlow = workflowEngine
+      .createWorkflow<{ task: string; trace: string[] }>('showcase-demo')
+      .step('audit_context', (ctx) => ({
+        ...ctx,
+        trace: [...ctx.trace, `audited:${ctx.task}`],
+      }))
+      .step('synthesize_artifact', (ctx) => ({
+        ...ctx,
+        trace: [...ctx.trace, 'synthesized:ephemeral-ready'],
+      }));
+
+    return await demoFlow.run(input.runId, { task: input.task, trace: [] });
   },
 });
 

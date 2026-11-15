@@ -23,6 +23,8 @@
       "@rudyrustam/cli": ["./packages/cli/src/index.ts"],
       "@rudyrustam/sse": ["./packages/sse/src/index.ts"],
       "@rudyrustam/db": ["./packages/db/src/index.ts"],
+      "@rudyrustam/auth": ["./packages/auth/src/index.ts"],
+      "@rudyrustam/workflow": ["./packages/workflow/src/index.ts"],
       "@rudyrustam/centaury": ["./packages/centaury/src/index.ts"],
       "@centaury/core": ["./packages/core/src/index.ts"],
       "@centaury/signals": ["./packages/signals/src/index.ts"],
@@ -32,6 +34,8 @@
       "@centaury/cli": ["./packages/cli/src/index.ts"],
       "@centaury/sse": ["./packages/sse/src/index.ts"],
       "@centaury/db": ["./packages/db/src/index.ts"],
+      "@centaury/auth": ["./packages/auth/src/index.ts"],
+      "@centaury/workflow": ["./packages/workflow/src/index.ts"],
       "@centaury/centaury": ["./packages/centaury/src/index.ts"]
     }
   },

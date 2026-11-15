@@ -1,8 +1,8 @@
 # Centaury Framework — Technical Blueprint & Architecture Design
-**Framework Name**: Centaury (`@centaury/core`)  
+**Framework Name**: Centaury (`@rudyrustam/centaury` / `@rudyrustam/core`)  
 **Tagline**: *The Autonomous Fullstack Engine for Super-Intelligent Systems*  
-**Document Status**: Official Architecture Specification  
-**Version**: 1.0.0-alpha  
+**Document Status**: Official Architecture Specification (11-Package Monorepo)  
+**Version**: 1.1.0-alpha  
 
 ---
 
@@ -48,13 +48,32 @@ c:\centaury/
 │   │   │   ├── live.ts        # Gemini Multimodal Live API connector
 │   │   │   └── index.ts
 │   │   └── package.json
-│   ├── agent/                 # Dual-Citizen MCP v1.x & AST Server
+│   ├── agent/                 # Dual-Citizen MCP v1.x, AST Reflector, Prompt Firewall & Self-Healer
 │   │   ├── src/
-│   │   │   ├── mcp.ts         # Model Context Protocol server endpoints
+│   │   │   ├── mcp.ts         # Model Context Protocol server endpoints & tools
 │   │   │   ├── inspector.ts   # Live route & schema reflection
 │   │   │   ├── memory.ts      # Episodic vector memory connector
+│   │   │   ├── firewall.ts    # Prompt injection, SSRF & PII sanitization firewall
+│   │   │   ├── self-heal.ts   # Autonomous crash diagnostics & fallback recovery
 │   │   │   └── index.ts
 │   │   └── package.json
+│   ├── sse/                   # Native Bun SSE Event Bus & Browser Client
+│   ├── db/                    # Native bun:sqlite WAL Engine, Migrations, Vector Store & Repository
+│   ├── auth/                  # Zero-Dependency Web Crypto Auth, RBAC/ReBAC, Passkeys & Legal Trio
+│   │   ├── src/
+│   │   │   ├── tokens.ts      # HS256 JWT tokens & PBKDF2-SHA256 hashing
+│   │   │   ├── rbac.ts        # RBAC + ReBAC access control & auth middleware
+│   │   │   ├── webauthn.ts    # FIDO2 / Passkey challenge lifecycle
+│   │   │   ├── compliance.ts  # Mandatory Legal & Privacy Trio (/privacy, /terms, /delete-account)
+│   │   │   └── index.ts
+│   │   └── package.json
+│   ├── workflow/              # A2A Agent Interoperability & Durable SQLite Saga Engine
+│   │   ├── src/
+│   │   │   ├── a2a.ts         # /.well-known/agent.json Agent Card & /a2a/tasks/* endpoints
+│   │   │   ├── saga.ts        # Durable step replay, retries & reverse Saga compensation
+│   │   │   └── index.ts
+│   │   └── package.json
+│   ├── centaury/              # Umbrella Framework Meta-Package (@rudyrustam/centaury)
 │   └── cli/                   # Centaury Developer CLI ("centaury")
 │       ├── src/
 │       │   ├── cli.ts         # "centaury dev", "centaury build", "centaury agent"
@@ -138,14 +157,29 @@ c:\centaury/
 | **ADR-003** | Unified Realtime Stream (WS/SSE) | Traditional REST + Polling | Real-time multimodal voice/screen grounding requires bi-directional low-latency pipes (<150ms). |
 | **ADR-004** | Declarative Ephemeral Token DSL | Raw arbitrary JS `eval()`, server-rendered HTML strings | Eliminates XSS vulnerabilities and ensures safe on-the-fly component synthesis by AI reasoning models. |
 | **ADR-005** | Native MCP v1.x Protocol | Custom proprietary agent API | Adheres to the global standard for agent tool calling, making Centaury apps immediately controllable by any AI agent. |
+| **ADR-006** | Prompt Firewall & Self-Healing Plugin in `@rudyrustam/agent` | Unchecked agent tool strings & uncaught process crashes | Blocks jailbreak/SSRF payloads pre-execution, redacts PII, and maps runtime stack frames deterministically to `astTarget` diagnostics (`/_heal/diagnostics`). |
+| **ADR-007** | Zero-Dependency Web Crypto Auth & Legal Trio Plugin (`@rudyrustam/auth`) | Heavy external JWT/Passport libraries & manual compliance pages | Uses native `crypto.subtle` (HS256 + PBKDF2) and ships mandatory `/privacy`, `/terms`, `/delete-account` compliance routes out of the box (UU PDP, GDPR Art. 17, Apple 5.1.1v). |
+| **ADR-008** | A2A Discovery & SQLite Durable Saga (`@rudyrustam/workflow`) | Heavy external Temporal clusters for single-node/edge apps | Enables zero-ops durable workflow step replay and reverse-order Saga compensation atop embedded WAL SQLite + standard `/.well-known/agent.json` interop. |
 
 ---
 
-## 6. Risk Assessment & Mitigation
+## 6. Risk Assessment & Pre-Mortem Mitigation
 
 1. **Risk: Malicious Ephemeral UI Injection**
-   * *Mitigation*: The `@centaury/ephemeral` parser strictly maps tokens to pre-registered Custom Elements. Raw `<script>` tags, inline `javascript:` URIs, and `onclick` attributes are mathematically stripped before mounting.
+   * *Mitigation*: The `@rudyrustam/ephemeral` parser strictly maps tokens to pre-registered Custom Elements. Raw `<script>` tags, inline `javascript:` URIs, and `onclick` attributes are mathematically stripped before mounting.
 2. **Risk: Network Latency Spikes on Multimodal Audio**
    * *Mitigation*: Astra Gateway implements local audio jitter buffers and automatic fallbacks to compact text streaming if WebSocket packet loss exceeds 5%.
 3. **Risk: High Frontier LLM Token Costs**
    * *Mitigation*: Aggressive Prefix KV-Caching (`kv-cache-prefix-optimizer`) locks static prompt prefixes across turns, securing 75-90% cost discounts.
+4. **Risk: Prompt Injection, SSRF & PII Leakage via Agent Inputs**
+   * *Mitigation*: `CentauryPromptFirewall` scores and blocks injection/loopback/metadata payloads pre-execution while redacting email addresses, API tokens, and card sequences.
+5. **Risk: Partial Multi-Step Execution Leaving Inconsistent External State**
+   * *Mitigation*: `CentauryWorkflowEngine` persists completed step checkpoints in `_centaury_workflow_steps` for deterministic replay and runs compensating actions in reverse order on permanent step failure.
+
+---
+
+## 7. FinOps Cost Envelope Projection
+
+- **Compute & Persistence Tier**: Embedded Bun runtime + WAL SQLite (`@rudyrustam/db`, `@rudyrustam/workflow`) keeps idle and edge worker cost near \$0–\$5/mo for single-node deployments (eliminating dedicated Redis/Temporal SaaS baselines).
+- **Auth & Compliance Tier**: `@rudyrustam/auth` runs natively on Web Crypto (`crypto.subtle`) with zero per-MAU external identity vendor fees.
+- **LLM Inference Controls**: Deterministic prefix locking (`registerKVCachePrefix`), firewall pre-filtering (`centaury_audit_prompt`), and bounded MCP context snapshots avoid wasted frontier reasoning tokens.

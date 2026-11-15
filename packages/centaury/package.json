@@ -1,6 +1,6 @@
 {
   "name": "@rudyrustam/centaury",
-  "version": "1.0.0-alpha",
+  "version": "1.1.0-alpha",
   "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -26,7 +26,9 @@
     "@rudyrustam/core": "workspace:*",
     "@rudyrustam/signals": "workspace:*",
     "@rudyrustam/sse": "workspace:*",
-    "@rudyrustam/db": "workspace:*"
+    "@rudyrustam/db": "workspace:*",
+    "@rudyrustam/auth": "workspace:*",
+    "@rudyrustam/workflow": "workspace:*"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",

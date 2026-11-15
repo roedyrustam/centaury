@@ -13,19 +13,22 @@
     },
     "examples/showcase-app": {
       "name": "centaury-showcase-app",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "dependencies": {
         "@rudyrustam/agent": "workspace:*",
         "@rudyrustam/astra": "workspace:*",
+        "@rudyrustam/auth": "workspace:*",
         "@rudyrustam/core": "workspace:*",
+        "@rudyrustam/db": "workspace:*",
         "@rudyrustam/ephemeral": "workspace:*",
         "@rudyrustam/signals": "workspace:*",
+        "@rudyrustam/workflow": "workspace:*",
         "zod": "^3.24.2",
       },
     },
     "packages/agent": {
       "name": "@rudyrustam/agent",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
         "@rudyrustam/db": "workspace:*",
@@ -33,7 +36,7 @@
     },
     "packages/astra": {
       "name": "@rudyrustam/astra",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
       },
@@ -41,23 +44,35 @@
         "happy-dom": "^17.1.8",
       },
     },
+    "packages/auth": {
+      "name": "@rudyrustam/auth",
+      "version": "1.1.0-alpha",
+      "dependencies": {
+        "@rudyrustam/core": "workspace:*",
+      },
+      "peerDependencies": {
+        "typescript": "^5.8.0",
+      },
+    },
     "packages/centaury": {
       "name": "@rudyrustam/centaury",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "bin": {
         "centaury": "./bin/centaury.js",
       },
       "dependencies": {
+        "@rudyrustam/auth": "workspace:*",
         "@rudyrustam/cli": "workspace:*",
         "@rudyrustam/core": "workspace:*",
         "@rudyrustam/db": "workspace:*",
         "@rudyrustam/signals": "workspace:*",
         "@rudyrustam/sse": "workspace:*",
+        "@rudyrustam/workflow": "workspace:*",
       },
     },
     "packages/cli": {
       "name": "@rudyrustam/cli",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "bin": {
         "centaury": "./bin/centaury.js",
       },
@@ -67,7 +82,7 @@
     },
     "packages/core": {
       "name": "@rudyrustam/core",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "dependencies": {
         "zod": "^3.24.2",
       },
@@ -77,14 +92,14 @@
     },
     "packages/db": {
       "name": "@rudyrustam/db",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "peerDependencies": {
         "typescript": "^5.8.0",
       },
     },
     "packages/ephemeral": {
       "name": "@rudyrustam/ephemeral",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "dependencies": {
         "@rudyrustam/signals": "workspace:*",
       },
@@ -94,16 +109,27 @@
     },
     "packages/signals": {
       "name": "@rudyrustam/signals",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "devDependencies": {
         "happy-dom": "^17.1.8",
       },
     },
     "packages/sse": {
       "name": "@rudyrustam/sse",
-      "version": "1.0.0-alpha",
+      "version": "1.1.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
+      },
+      "peerDependencies": {
+        "typescript": "^5.8.0",
+      },
+    },
+    "packages/workflow": {
+      "name": "@rudyrustam/workflow",
+      "version": "1.1.0-alpha",
+      "dependencies": {
+        "@rudyrustam/core": "workspace:*",
+        "@rudyrustam/db": "workspace:*",
       },
       "peerDependencies": {
         "typescript": "^5.8.0",
@@ -114,6 +140,8 @@
     "@rudyrustam/agent": ["@rudyrustam/agent@workspace:packages/agent"],
 
     "@rudyrustam/astra": ["@rudyrustam/astra@workspace:packages/astra"],
+
+    "@rudyrustam/auth": ["@rudyrustam/auth@workspace:packages/auth"],
 
     "@rudyrustam/centaury": ["@rudyrustam/centaury@workspace:packages/centaury"],
 
@@ -128,6 +156,8 @@
     "@rudyrustam/signals": ["@rudyrustam/signals@workspace:packages/signals"],
 
     "@rudyrustam/sse": ["@rudyrustam/sse@workspace:packages/sse"],
+
+    "@rudyrustam/workflow": ["@rudyrustam/workflow@workspace:packages/workflow"],
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 

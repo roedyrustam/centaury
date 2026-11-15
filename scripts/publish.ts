@@ -18,6 +18,8 @@ const packagesToPublish: PackagePublishTarget[] = [
   { name: '@rudyrustam/astra', dir: 'packages/astra' },
   { name: '@rudyrustam/sse', dir: 'packages/sse' },
   { name: '@rudyrustam/db', dir: 'packages/db' },
+  { name: '@rudyrustam/auth', dir: 'packages/auth' },
+  { name: '@rudyrustam/workflow', dir: 'packages/workflow' },
   { name: '@rudyrustam/agent', dir: 'packages/agent' },
   { name: '@rudyrustam/cli', dir: 'packages/cli' },
   { name: '@rudyrustam/centaury', dir: 'packages/centaury' },

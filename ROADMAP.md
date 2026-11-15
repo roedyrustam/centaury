@@ -1,18 +1,19 @@
 # Centaury Framework — Development Roadmap & Phase Progression
-**Framework**: Centaury (`@centaury/core`)  
-**Lifecycle Pipeline**: 8-Phase Production Protocol (`zero-to-prod-orchestrator`)  
+**Framework**: Centaury (`@rudyrustam/centaury` / `@rudyrustam/core`)  
+**Version**: `1.1.0-alpha`  
+**Lifecycle Pipeline**: Autonomous Multi-Phase Protocol (`zero-to-prod-orchestrator`)  
 
 ---
 
 ## Roadmap Phases Overview
 
 ```
-[Phase 1: Micro-Kernel] ────> [Phase 2: Micro-Signals] ────> [Phase 3: Ephemeral UI]
-                                                                    │
-[Phase 6: Hardening]    <──── [Phase 5: MCP & AST]     <──── [Phase 4: Astra Gateway]
+[Phase 1-3: Core / Signals / Ephemeral] ──> [Phase 4-5: Astra & MCP v1.x] ──> [Phase 6-8: Hardening, Showcase, CLI]
+                                                                                         │
+[Phase 13: @rudyrustam/workflow] <── [Phase 12: @rudyrustam/auth] <── [Phase 11: Self-Heal & Firewall] <── [Phase 9-10: SSE & DB]
          │
          v
-[Phase 7: Showcase App] ────> [Phase 8: Production Release]
+[Phase 14: 11-Package Branding Sync, Showcase v2 & E2E Hardening]
 ```
 
 ---
@@ -67,10 +68,30 @@
 - [x] Plugin server SSE (`GET /sse/:topic`, `GET /sse`, `GET /sse/_stats`).
 - [x] Typed browser SSE client dengan reconnect back-off otomatis.
 
-### 💾 Phase 10: Bun SQLite & Vector Memory Engine (`@centaury-ai/db`)
+### 💾 Phase 10: Bun SQLite & Vector Memory Engine (`@rudyrustam/db`)
 - [x] Native Bun SQLite connection manager dengan WAL mode dan LRU statement caching.
 - [x] Parameterized SQL query builder pencegah SQL injection (`query()`).
 - [x] Migration runner dengan atomic transactional execution (`_centaury_migrations`).
 - [x] Vector Store dengan cosine similarity search Float32Array SIMD (7.5M+ ops/sec).
 - [x] Type-safe Generic Repository pattern (`CentauryRepository<T>`).
 - [x] Integrasi persistent episodic memory & vector search ke AI Agent (`CentauryAgentMemory`).
+
+### 🛡️ Phase 11: Autonomous Self-Healing Runtime & Prompt Firewall (`@rudyrustam/agent`)
+- [x] `CentauryPromptFirewall` untuk deteksi prompt injection, jailbreak tokens, SSRF metadata targets, serta redaksi PII & validasi output JSON terstruktur.
+- [x] `CentaurySelfHealer` + `selfHealingPlugin` dengan parsing stack frame Windows/POSIX, pemetaan `astTarget`, fallback recovery, dan endpoint `GET /_heal/diagnostics`.
+- [x] Tool MCP v1.x baru: `centaury_audit_prompt` dan `centaury_get_healing_diagnostics`.
+
+### 🔐 Phase 12: Zero-Trust Auth, Passkeys & Compliance Pack (`@rudyrustam/auth`)
+- [x] Token HS256 JWT stateless & PBKDF2-SHA256 salted password hashing berbasis native Web Crypto (`crypto.subtle`).
+- [x] `CentauryAccessControl` gabungan RBAC (termasuk wildcard `*`) dan ReBAC tuples (`grantRelation`, `checkRelation`, `revokeRelation`) + `createAuthMiddleware`.
+- [x] `CentauryPasskeyManager` WebAuthn challenge registration/authentication sekali pakai dengan TTL.
+- [x] `legalCompliancePlugin` menyediakan rute wajib Trio Privasi & Legal: `/privacy`, `/terms`, `/delete-account`, dan `POST /api/compliance/delete-account`.
+
+### 🔄 Phase 13: A2A Multi-Agent Swarm & Durable Workflows (`@rudyrustam/workflow`)
+- [x] `CentauryA2AServer` & `a2aPlugin` dengan endpoint Discovery `GET /.well-known/agent.json`, `POST /a2a/tasks/send`, `GET /a2a/tasks/:id`, dan `POST /a2a/tasks/:id/cancel`.
+- [x] `CentauryWorkflowEngine` dengan checkpoint persisten SQLite (`_centaury_workflow_steps`), step retries, deterministic replay, dan reverse-order Saga compensation.
+
+### 📦 Phase 14: Monorepo 11-Package Synchronization & Showcase App v2 (`@rudyrustam/centaury`)
+- [x] Sinkronisasi nama paket `@rudyrustam/*` di seluruh 11 paket monorepo menuju `1.1.0-alpha`.
+- [x] Re-export `@rudyrustam/auth` dan `@rudyrustam/workflow` via umbrella `@rudyrustam/centaury`.
+- [x] Integrasi plugin firewall/self-heal/compliance/A2A + RPC workflow demo ke `examples/showcase-app/server.ts`.

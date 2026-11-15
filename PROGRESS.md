@@ -1,8 +1,9 @@
 # Centaury Framework — Progress Tracker
 
 ## Status Overview
-- **Active Phase**: ALL 10 PHASES 100% COMPLETED + Advanced Capabilities Active! 🚀
-- **Test Pass Rate**: 100% (82/82 tests passing across 8 suites)
+- **Active Phase**: ALL 14 PHASES 100% COMPLETED — Centaury `1.1.0-alpha` Ready! 🚀
+- **Package Topology**: 11 Modular `@rudyrustam/*` Packages (`core`, `signals`, `ephemeral`, `astra`, `sse`, `db`, `auth`, `workflow`, `agent`, `cli`, `centaury`)
+- **Test Pass Rate**: 100% (92/92 tests passing across 10 suites)
 - **Typecheck Status**: 0 errors (`tsc --noEmit` strictly clean)
 - **Engine Performance**: 16.6M ops/s signal reactivity, 10.0M matches/s Trie router, 7.5M ops/s vector cosine similarity, 2.12M queries/s SQLite prepared queries
 - **Showcase Status**: Live at http://localhost:3000
@@ -109,4 +110,28 @@
 - [x] Integrasi ke `examples/showcase-app`: Card interaktif SQLite & Vector Memory, RPC `db.getStats`, dan `agent.recallMemory`.
 - [x] Build pipeline `.d.ts` & bundle distribution (`dist/index.js` 9.79 KB).
 - [x] Suite test komprehensif (8 new tests, 48 assertions, 100% pass), total monorepo: **82/82 pass**, typecheck `tsc --noEmit` **0 errors**.
+
+### Phase 11: Autonomous Self-Healing Runtime & Prompt Firewall (`@rudyrustam/agent`) [COMPLETED]
+- [x] `CentauryPromptFirewall` (`packages/agent/src/firewall.ts`) dengan deteksi prompt injection, SSRF guard, redaksi PII otomatis, dan validator struktur output JSON.
+- [x] `CentaurySelfHealer` & `selfHealingPlugin` (`packages/agent/src/self-heal.ts`) dengan stack frame parser, pemetaan AST target, recovery fallback, serta endpoint `GET /_heal/diagnostics`.
+- [x] Penambahan tool MCP v1.x: `centaury_audit_prompt` dan `centaury_get_healing_diagnostics`.
+- [x] Suite unit & integration test baru (11/11 pass di `packages/agent/test/agent.test.ts`).
+
+### Phase 12: Zero-Trust Auth, Passkeys & Legal Compliance (`@rudyrustam/auth`) [COMPLETED]
+- [x] Paket baru `@rudyrustam/auth` menggunakan Web Crypto API native tanpa dependensi eksternal (`tokens.ts`, `rbac.ts`, `webauthn.ts`, `compliance.ts`).
+- [x] HS256 JWT stateless + salted PBKDF2-SHA256 hashing + constant-time verification.
+- [x] `CentauryAccessControl` (RBAC + ReBAC tuples) & `createAuthMiddleware`.
+- [x] `CentauryPasskeyManager` WebAuthn challenge single-use registration/authentication.
+- [x] `legalCompliancePlugin` menyediakan `/privacy`, `/terms`, `/delete-account`, dan `POST /api/compliance/delete-account` (UU PDP No. 27/2022 & GDPR Art. 17).
+- [x] Suite test komprehensif (`packages/auth/test/auth.test.ts`, 5/5 pass, 34 assertions).
+
+### Phase 13: A2A Multi-Agent Swarm & Durable Workflows (`@rudyrustam/workflow`) [COMPLETED]
+- [x] Paket baru `@rudyrustam/workflow` menyediakan `CentauryA2AServer` + `a2aPlugin` (`/.well-known/agent.json`, `/a2a/tasks/send`, `/a2a/tasks/:id`, `/a2a/tasks/:id/cancel`).
+- [x] `CentauryWorkflowEngine` dengan persistent checkpointing SQLite (`_centaury_workflow_steps`), step retry/backoff, deterministic replay, dan reverse-order Saga compensation.
+- [x] Suite test komprehensif (`packages/workflow/test/workflow.test.ts`, 2/2 pass, 25 assertions).
+
+### Phase 14: 11-Package Synchronization, Showcase v2 & Docs (`@rudyrustam/centaury`) [COMPLETED]
+- [x] Pembaruan versi seluruh 11 paket monorepo ke `1.1.0-alpha` dan re-export umbrella melalui `@rudyrustam/centaury`.
+- [x] Integrasi plugin Firewall, Self-Healer, Legal Compliance Trio, dan A2A/Workflow demo ke `examples/showcase-app/server.ts`.
+- [x] Sinkronisasi `ROADMAP.md`, `PROGRESS.md`, `BLUEPRINT.md`, `PRD.md`, dan `README.md` serta verifikasi penuh (`build`, `typecheck`, `bun test`, `release:check`).
 

@@ -6,6 +6,8 @@
 import { CentauryServer, CentauryContext } from '@rudyrustam/core';
 import { CentauryInspector } from './inspector';
 import { CentauryAgentMemory } from './memory';
+import { CentauryPromptFirewall } from './firewall';
+import { CentaurySelfHealer } from './self-heal';
 
 export interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -28,11 +30,19 @@ export interface JsonRpcResponse {
 export class CentauryMCPServer {
   public readonly inspector: CentauryInspector = new CentauryInspector();
   public readonly memory: CentauryAgentMemory;
+  public readonly firewall: CentauryPromptFirewall;
+  public readonly healer: CentaurySelfHealer;
   private server: CentauryServer;
 
-  constructor(server: CentauryServer, memory?: CentauryAgentMemory) {
+  constructor(
+    server: CentauryServer,
+    memory?: CentauryAgentMemory,
+    options?: { firewall?: CentauryPromptFirewall; healer?: CentaurySelfHealer }
+  ) {
     this.server = server;
     this.memory = memory ?? new CentauryAgentMemory();
+    this.firewall = options?.firewall ?? new CentauryPromptFirewall();
+    this.healer = options?.healer ?? new CentaurySelfHealer();
   }
 
   /**
@@ -124,6 +134,27 @@ export class CentauryMCPServer {
                       minScore: { type: 'number', description: 'Minimum similarity score between 0.0 and 1.0 (default: 0.5)' },
                     },
                     required: ['sessionId', 'queryEmbedding'],
+                  },
+                },
+                {
+                  name: 'centaury_audit_prompt',
+                  description: 'Inspect and sanitize a prompt or tool input against injection, SSRF, and PII rules',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      prompt: { type: 'string', description: 'Prompt text to audit' },
+                    },
+                    required: ['prompt'],
+                  },
+                },
+                {
+                  name: 'centaury_get_healing_diagnostics',
+                  description: 'Retrieve captured crash stack diagnostics and AST suggested fixes from Self-Healer',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      limit: { type: 'number', description: 'Maximum diagnostics to return (default: 20)' },
+                    },
                   },
                 },
               ],
@@ -254,6 +285,20 @@ export class CentauryMCPServer {
           role: r.metadata?.role,
           timestamp: r.createdAt,
         }));
+      }
+
+      case 'centaury_audit_prompt': {
+        const prompt = String(args.prompt ?? '');
+        const verdict = this.firewall.inspectPrompt(prompt);
+        if (!verdict.allowed) {
+          this.inspector.log(`Prompt firewall blocked high-risk input (score=${verdict.riskScore})`);
+        }
+        return verdict;
+      }
+
+      case 'centaury_get_healing_diagnostics': {
+        const limit = Number(args.limit) || 20;
+        return this.healer.getDiagnostics(limit);
       }
 
       default:
