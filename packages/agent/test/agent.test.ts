@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
-import { CentauryServer } from '@centaury/core';
+import { CentauryServer } from '@rudyrustam/core';
 import { CentauryMCPServer } from '../src/mcp';
 import { CentauryAgentMemory } from '../src/memory';
 import { z } from 'zod';
@@ -162,7 +162,7 @@ describe('@centaury/agent Dual-Citizen MCP v1.x & AST Reflector', () => {
   });
 
   it('supports persistent SQLite episodic memory with vector cosine recall', () => {
-    const { CentauryDatabase } = require('@roedyrustam/db');
+    const { CentauryDatabase } = require('@rudyrustam/db');
     const persistentDb = new CentauryDatabase({ path: ':memory:' });
     const memory = new CentauryAgentMemory({ db: persistentDb });
 

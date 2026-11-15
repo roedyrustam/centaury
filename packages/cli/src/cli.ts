@@ -143,17 +143,17 @@ async function scaffoldProject(projectName: string, options: CreateOptions): Pro
 
   // 1. package.json
   const dependencies: Record<string, string> = {
-    '@roedyrustam/core': '^1.0.0-alpha',
-    '@roedyrustam/signals': '^1.0.0-alpha',
+    '@rudyrustam/core': '^1.0.0-alpha',
+    '@rudyrustam/signals': '^1.0.0-alpha',
     zod: '^3.24.2',
   };
 
   if (options.template === 'fullstack' || options.template === 'agentic') {
-    dependencies['@roedyrustam/ephemeral'] = '^1.0.0-alpha';
+    dependencies['@rudyrustam/ephemeral'] = '^1.0.0-alpha';
   }
   if (options.template === 'agentic') {
-    dependencies['@roedyrustam/astra'] = '^1.0.0-alpha';
-    dependencies['@roedyrustam/agent'] = '^1.0.0-alpha';
+    dependencies['@rudyrustam/astra'] = '^1.0.0-alpha';
+    dependencies['@rudyrustam/agent'] = '^1.0.0-alpha';
   }
 
   const pkgJson = {
@@ -185,7 +185,7 @@ async function scaffoldProject(projectName: string, options: CreateOptions): Pro
   // 3. src/server.ts
   let serverCode = '';
   if (options.template === 'minimal') {
-    serverCode = `import { CentauryServer } from '@roedyrustam/core';
+    serverCode = `import { CentauryServer } from '@rudyrustam/core';
 import { join } from 'path';
 
 const app = new CentauryServer({ port: 3000 });
@@ -203,8 +203,8 @@ app.listen();
 console.log('🌌 Centaury minimal server running at http://localhost:3000');
 `;
   } else if (options.template === 'agentic') {
-    serverCode = `import { CentauryServer } from '@roedyrustam/core';
-import { CentauryMCPServer } from '@roedyrustam/agent';
+    serverCode = `import { CentauryServer } from '@rudyrustam/core';
+import { CentauryMCPServer } from '@rudyrustam/agent';
 import { z } from 'zod';
 import { join } from 'path';
 
@@ -245,7 +245,7 @@ console.log('🤖 MCP Endpoint active at http://localhost:3000/mcp');
 `;
   } else {
     // fullstack default
-    serverCode = `import { CentauryServer } from '@roedyrustam/core';
+    serverCode = `import { CentauryServer } from '@rudyrustam/core';
 import { z } from 'zod';
 import { join } from 'path';
 
@@ -368,13 +368,13 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
   if (options.install) {
     console.log(`\n📦 Linking Centaury packages & installing dependencies in ${projectName}...`);
 
-    // Automatically link local @centaury-ai packages
-    const pkgsToLink = ['@roedyrustam/core', '@roedyrustam/signals'];
+    // Automatically link local @rudyrustam packages
+    const pkgsToLink = ['@rudyrustam/core', '@rudyrustam/signals'];
     if (options.template === 'fullstack' || options.template === 'agentic') {
-      pkgsToLink.push('@roedyrustam/ephemeral');
+      pkgsToLink.push('@rudyrustam/ephemeral');
     }
     if (options.template === 'agentic') {
-      pkgsToLink.push('@roedyrustam/astra', '@roedyrustam/agent');
+      pkgsToLink.push('@rudyrustam/astra', '@rudyrustam/agent');
     }
 
     for (const pkg of pkgsToLink) {

@@ -22,11 +22,11 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@roedyrustam/cli": "workspace:*",
-    "@roedyrustam/core": "workspace:*",
-    "@roedyrustam/signals": "workspace:*",
-    "@roedyrustam/sse": "workspace:*",
-    "@roedyrustam/db": "workspace:*"
+    "@rudyrustam/cli": "workspace:*",
+    "@rudyrustam/core": "workspace:*",
+    "@rudyrustam/signals": "workspace:*",
+    "@rudyrustam/sse": "workspace:*",
+    "@rudyrustam/db": "workspace:*"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",

@@ -64,8 +64,8 @@ describe('@centaury/cli Developer Tools', () => {
       expect(code).toBe(0);
       expect(existsSync(join(agenticProject, 'package.json'))).toBe(true);
       const pkg = JSON.parse(await Bun.file(join(agenticProject, 'package.json')).text());
-      expect(pkg.dependencies['@roedyrustam/agent']).toBeDefined();
-      expect(pkg.dependencies['@roedyrustam/astra']).toBeDefined();
+      expect(pkg.dependencies['@rudyrustam/agent']).toBeDefined();
+      expect(pkg.dependencies['@rudyrustam/astra']).toBeDefined();
     } finally {
       if (existsSync(agenticProject)) {
         rmSync(agenticProject, { recursive: true, force: true });

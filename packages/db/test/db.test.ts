@@ -1,6 +1,6 @@
 /**
  * @file db.test.ts
- * @description Comprehensive unit & integration tests for @roedyrustam/db
+ * @description Comprehensive unit & integration tests for @rudyrustam/db
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
@@ -17,7 +17,7 @@ import {
   deserializeVector,
 } from '../src/index';
 
-describe('@roedyrustam/db Database Core & WAL Lifecycle', () => {
+describe('@rudyrustam/db Database Core & WAL Lifecycle', () => {
   let db: CentauryDatabase;
 
   beforeEach(() => {
@@ -77,7 +77,7 @@ describe('@roedyrustam/db Database Core & WAL Lifecycle', () => {
   });
 });
 
-describe('@roedyrustam/db QueryBuilder', () => {
+describe('@rudyrustam/db QueryBuilder', () => {
   let db: CentauryDatabase;
 
   beforeEach(() => {
@@ -147,7 +147,7 @@ describe('@roedyrustam/db QueryBuilder', () => {
   });
 });
 
-describe('@roedyrustam/db Migration Runner', () => {
+describe('@rudyrustam/db Migration Runner', () => {
   let db: CentauryDatabase;
 
   beforeEach(() => {
@@ -205,7 +205,7 @@ describe('@roedyrustam/db Migration Runner', () => {
   });
 });
 
-describe('@roedyrustam/db Vector Engine & Vector Store', () => {
+describe('@rudyrustam/db Vector Engine & Vector Store', () => {
   let db: CentauryDatabase;
 
   beforeEach(() => {
@@ -286,7 +286,7 @@ describe('@roedyrustam/db Vector Engine & Vector Store', () => {
   });
 });
 
-describe('@roedyrustam/db Repository Pattern', () => {
+describe('@rudyrustam/db Repository Pattern', () => {
   interface AgentTask {
     id: string;
     title: string;

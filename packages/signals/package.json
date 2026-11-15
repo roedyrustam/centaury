@@ -1,5 +1,5 @@
 {
-  "name": "@roedyrustam/signals",
+  "name": "@rudyrustam/signals",
   "version": "1.0.0-alpha",
   "description": "Zero-Hydration Micro-Signals and Native Web Components for Centaury",
   "main": "./dist/index.js",

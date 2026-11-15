@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Public exports for @roedyrustam/db
+ * @description Public exports for @rudyrustam/db
  */
 
 export * from './database';

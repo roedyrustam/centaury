@@ -12,14 +12,14 @@ interface PackagePublishTarget {
 }
 
 const packagesToPublish: PackagePublishTarget[] = [
-  { name: '@roedyrustam/core', dir: 'packages/core' },
-  { name: '@roedyrustam/signals', dir: 'packages/signals' },
-  { name: '@roedyrustam/ephemeral', dir: 'packages/ephemeral' },
-  { name: '@roedyrustam/astra', dir: 'packages/astra' },
-  { name: '@roedyrustam/sse', dir: 'packages/sse' },
-  { name: '@roedyrustam/db', dir: 'packages/db' },
-  { name: '@roedyrustam/agent', dir: 'packages/agent' },
-  { name: '@roedyrustam/cli', dir: 'packages/cli' },
+  { name: '@rudyrustam/core', dir: 'packages/core' },
+  { name: '@rudyrustam/signals', dir: 'packages/signals' },
+  { name: '@rudyrustam/ephemeral', dir: 'packages/ephemeral' },
+  { name: '@rudyrustam/astra', dir: 'packages/astra' },
+  { name: '@rudyrustam/sse', dir: 'packages/sse' },
+  { name: '@rudyrustam/db', dir: 'packages/db' },
+  { name: '@rudyrustam/agent', dir: 'packages/agent' },
+  { name: '@rudyrustam/cli', dir: 'packages/cli' },
   { name: 'centaury', dir: 'packages/centaury' },
 ];
 
@@ -200,7 +200,16 @@ async function runPublishPipeline() {
           }
 
           console.error(`  \x1b[31m✗ Failed to publish ${pkg.name}:\x1b[0m\n${result.output}`);
-          if (!isDryRun && !process.env.CI) {
+          if (result.output.includes('Two-factor authentication or granular access token with bypass 2fa enabled is required')) {
+            console.error(
+              '\n\x1b[33m⚠️  Kebijakan keamanan npm mewajibkan 2FA atau Granular Access Token (Bypass 2FA) untuk publish:\x1b[0m\n' +
+                `  1. Buat Granular Access Token di https://www.npmjs.com/settings/${loggedInUser}/tokens (Read & write + centang "Bypass two-factor authentication"), lalu jalankan:\n` +
+                '     $env:NPM_TOKEN="npm_xxx"; bun run release:publish\n' +
+                `  2. Atau aktifkan 2FA di https://www.npmjs.com/settings/${loggedInUser}/profile, lalu jalankan:\n` +
+                '     bun run scripts/publish.ts --otp=<6-digit-otp>\n'
+            );
+          }
+          if (!isDryRun) {
             throw new Error(`Publish failed at ${pkg.name}`);
           }
           break;

@@ -1,6 +1,6 @@
 /**
  * @file sse.test.ts
- * @description Comprehensive test suite for @roedyrustam/sse
+ * @description Comprehensive test suite for @rudyrustam/sse
  * Tests: EventBus, SSE formatter, plugin routing, and client reconnect logic
  */
 
@@ -9,7 +9,7 @@ import { CentauryEventBus, type SseEvent } from '../src/event-bus';
 import { formatSseEvent, createSseResponse } from '../src/sse-handler';
 import { ssePlugin } from '../src/sse-plugin';
 import { CentaurySSEClient } from '../src/client';
-import { CentauryServer, CentauryContext } from '@roedyrustam/core';
+import { CentauryServer, CentauryContext } from '@rudyrustam/core';
 
 // ─── EventBus ────────────────────────────────────────────────────────────────
 

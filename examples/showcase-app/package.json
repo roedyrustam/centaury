@@ -7,11 +7,11 @@
     "dev": "bun run server.ts"
   },
   "dependencies": {
-    "@roedyrustam/core": "workspace:*",
-    "@roedyrustam/signals": "workspace:*",
-    "@roedyrustam/ephemeral": "workspace:*",
-    "@roedyrustam/astra": "workspace:*",
-    "@roedyrustam/agent": "workspace:*",
+    "@rudyrustam/core": "workspace:*",
+    "@rudyrustam/signals": "workspace:*",
+    "@rudyrustam/ephemeral": "workspace:*",
+    "@rudyrustam/astra": "workspace:*",
+    "@rudyrustam/agent": "workspace:*",
     "zod": "^3.24.2"
   }
 }

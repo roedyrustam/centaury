@@ -1,5 +1,5 @@
 {
-  "name": "@roedyrustam/agent",
+  "name": "@rudyrustam/agent",
   "version": "1.0.0-alpha",
   "description": "Dual-Citizen Model Context Protocol (MCP v1.x) & Live AST Reflector for Centaury",
   "main": "./dist/index.js",
@@ -21,8 +21,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@roedyrustam/core": "workspace:*",
-    "@roedyrustam/db": "workspace:*"
+    "@rudyrustam/core": "workspace:*",
+    "@rudyrustam/db": "workspace:*"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",

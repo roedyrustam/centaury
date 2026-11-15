@@ -1,5 +1,5 @@
 {
-  "name": "@roedyrustam/ephemeral",
+  "name": "@rudyrustam/ephemeral",
   "version": "1.0.0-alpha",
   "description": "Zero-Eval Ephemeral Generative UI Synthesizer & Token Streamer for Centaury",
   "main": "./dist/index.js",
@@ -21,7 +21,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@roedyrustam/signals": "workspace:*"
+    "@rudyrustam/signals": "workspace:*"
   },
   "devDependencies": {
     "happy-dom": "^17.1.8"

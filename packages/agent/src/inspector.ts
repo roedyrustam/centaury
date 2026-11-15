@@ -3,7 +3,7 @@
  * @description Live AST & Schema Reflector for Centaury Dual-Citizen Agent Engine
  */
 
-import type { CentauryServer } from '@centaury/core';
+import type { CentauryServer } from '@rudyrustam/core';
 
 export interface RouteMetadata {
   method: string;

@@ -3,7 +3,7 @@
  * @description Native Model Context Protocol (MCP v1.x) Server for Centaury Dual-Citizen AI Agents
  */
 
-import { CentauryServer, CentauryContext } from '@centaury/core';
+import { CentauryServer, CentauryContext } from '@rudyrustam/core';
 import { CentauryInspector } from './inspector';
 import { CentauryAgentMemory } from './memory';
 
