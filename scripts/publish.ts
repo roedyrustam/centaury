@@ -20,7 +20,7 @@ const packagesToPublish: PackagePublishTarget[] = [
   { name: '@rudyrustam/db', dir: 'packages/db' },
   { name: '@rudyrustam/agent', dir: 'packages/agent' },
   { name: '@rudyrustam/cli', dir: 'packages/cli' },
-  { name: 'centaury', dir: 'packages/centaury' },
+  { name: '@rudyrustam/centaury', dir: 'packages/centaury' },
 ];
 
 const isDryRun = process.argv.includes('--dry-run');
@@ -151,17 +151,37 @@ async function runPublishPipeline() {
 
     // 4. Publish each package
     console.log(`\n🚀 Step 4: Publishing packages to npmjs registry...`);
+    const bunxBin = process.platform === 'win32' ? 'bunx.exe' : 'bunx';
+    let stagedCount = 0;
+
+    // Pre-check currently staged packages so already-staged versions are not re-uploaded
+    const stageListPre = isDryRun
+      ? { success: false, output: '' }
+      : await execCommand([bunxBin, 'npm@latest', 'stage', 'list'], process.cwd());
+    const preStagedBlocks = stageListPre.output
+      ? stageListPre.output.split(/\r?\n\s*\r?\n/)
+      : [];
 
     for (const pkg of packagesToPublish) {
       const pkgDir = join(process.cwd(), pkg.dir);
       if (!existsSync(pkgDir)) continue;
+
+      const alreadyStaged = preStagedBlocks.some(
+        (block) =>
+          block.includes(`package name: ${pkg.name}`) &&
+          block.includes(`version: ${releaseVersion}`)
+      );
+      if (alreadyStaged) {
+        console.log(`  \x1b[33mℹ\x1b[0m ${pkg.name}@${releaseVersion} is already staged on npm. Skipping.`);
+        continue;
+      }
 
       let published = false;
       let attempts = 0;
 
       while (!published && attempts < 3) {
         attempts++;
-        const publishArgs = [npmBin, 'publish', '--access', 'public'];
+        const publishArgs = [npmBin, 'publish', '--access', 'public', '--tag', 'latest'];
         if (isDryRun) {
           publishArgs.push('--dry-run');
         }
@@ -170,7 +190,7 @@ async function runPublishPipeline() {
         }
 
         console.log(`  📦 Publishing \x1b[33m${pkg.name}\x1b[0m (${pkg.dir})...`);
-        const result = await execCommand(publishArgs, pkgDir);
+        let result = await execCommand(publishArgs, pkgDir);
 
         if (result.success) {
           console.log(`  \x1b[32m✓\x1b[0m \x1b[32mSuccessfully published ${pkg.name}\x1b[0m`);
@@ -185,6 +205,54 @@ async function runPublishPipeline() {
             console.log(`  \x1b[33mℹ\x1b[0m ${pkg.name}@${releaseVersion} is already published on npm. Skipping.`);
             published = true;
             break;
+          }
+
+          // Fallback to `npm stage publish` when token is restricted to staged publishing
+          if (
+            result.output.includes('E_STAGE_REQUIRED') ||
+            result.output.includes('can only publish to a staging area') ||
+            result.output.includes('npm stage publish')
+          ) {
+            console.log(`  \x1b[33mℹ\x1b[0m Token requires staged publishing (E_STAGE_REQUIRED). Running \`npm stage publish\` for ${pkg.name}...`);
+            const stageArgs = [bunxBin, 'npm@latest', 'stage', 'publish', '.', '--access', 'public', '--tag', 'latest'];
+            if (isDryRun) {
+              stageArgs.push('--dry-run');
+            }
+            if (currentOtp) {
+              stageArgs.push(`--otp=${currentOtp}`);
+            }
+
+            const stageResult = await execCommand(stageArgs, pkgDir);
+            if (
+              stageResult.success ||
+              stageResult.output.includes('has been staged') ||
+              stageResult.output.includes('(staged)')
+            ) {
+              const stageSummary = stageResult.output
+                .split('\n')
+                .filter((line) => line.includes('staged') || line.includes('stage '))
+                .slice(-3)
+                .join('\n');
+              console.log(`  \x1b[32m✓\x1b[0m \x1b[32mSuccessfully staged ${pkg.name}\x1b[0m`);
+              if (stageSummary) {
+                console.log(`    \x1b[90m${stageSummary.replace(/\n/g, '\n    ')}\x1b[0m`);
+              }
+              stagedCount++;
+              published = true;
+              break;
+            }
+
+            if (
+              stageResult.output.includes('cannot publish over the previously published versions') ||
+              stageResult.output.includes('is already published') ||
+              stageResult.output.includes('EPUBLISHCONFLICT')
+            ) {
+              console.log(`  \x1b[33mℹ\x1b[0m ${pkg.name}@${releaseVersion} is already published or staged on npm. Skipping.`);
+              published = true;
+              break;
+            }
+
+            result = stageResult;
           }
 
           // Check if error is OTP related
@@ -215,6 +283,17 @@ async function runPublishPipeline() {
           break;
         }
       }
+    }
+
+    if (stagedCount > 0) {
+      console.log(`\n📋 Listing staged packages on npm (${stagedCount} staged)...`);
+      const stageList = await execCommand([bunxBin, 'npm@latest', 'stage', 'list'], process.cwd());
+      if (stageList.output) {
+        console.log(stageList.output);
+      }
+      console.log(
+        '\n\x1b[33mℹ️  Packages are staged on npm. Review and approve them via `npm stage approve <stage-id>` or on npmjs.com.\x1b[0m'
+      );
     }
 
     console.log(`\n\x1b[32m✨ All packages published successfully to https://www.npmjs.com/~${loggedInUser} !\x1b[0m\n`);

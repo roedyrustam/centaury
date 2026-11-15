@@ -1,5 +1,5 @@
 {
-  "name": "centaury",
+  "name": "@rudyrustam/centaury",
   "version": "1.0.0-alpha",
   "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems",
   "main": "./dist/index.js",
