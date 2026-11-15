@@ -127,10 +127,10 @@ async function approveStagedPackage(
   stageId: string,
   pkgName: string,
   token: string,
-  cachedOtp: string | null
+  cachedOtp: string | null,
+  npmSession: string
 ): Promise<{ approved: boolean; otp: string | null; error?: string }> {
   const approveUrl = `https://registry.npmjs.org/-/stage/${stageId}/approve`;
-  const npmSession = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
   const baseHeaders: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     Accept: 'application/json',
@@ -141,7 +141,7 @@ async function approveStagedPackage(
   };
   let activeOtp = cachedOtp;
 
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     const headers: Record<string, string> = { ...baseHeaders };
     if (activeOtp) {
       headers['npm-otp'] = activeOtp;
@@ -158,6 +158,11 @@ async function approveStagedPackage(
       bodyJson = JSON.parse(bodyText);
     } catch {
       bodyJson = null;
+    }
+
+    if (res.status === 401 && activeOtp && (!bodyJson?.authUrl || !bodyJson?.doneUrl)) {
+      activeOtp = null;
+      continue;
     }
 
     if (res.status === 401 && bodyJson?.authUrl && bodyJson?.doneUrl) {
@@ -459,6 +464,7 @@ async function runPublishPipeline() {
         }
 
         let cachedWebOtp: string | null = currentOtp;
+        const sharedNpmSession = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 
         for (const { pkg, entry } of pendingApprovals) {
           let activeEntry = entry;
@@ -475,7 +481,7 @@ async function runPublishPipeline() {
           }
 
           console.log(`  🚀 Approving \x1b[33m${pkg.name}@${releaseVersion}\x1b[0m (${activeEntry.id})...`);
-          const approval = await approveStagedPackage(activeEntry.id, pkg.name, npmToken, cachedWebOtp);
+          const approval = await approveStagedPackage(activeEntry.id, pkg.name, npmToken, cachedWebOtp, sharedNpmSession);
           if (!approval.approved) {
             throw new Error(`Stage approval failed for ${pkg.name} (${activeEntry.id}): ${approval.error}`);
           }
