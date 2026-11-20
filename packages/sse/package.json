@@ -21,7 +21,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@rudyrustam/core": "workspace:*"
+    "@rudyrustam/core": "^1.2.0-alpha"
   },
   "peerDependencies": {
     "typescript": "^5.8.0"
@@ -30,7 +30,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/roedyrustam/centaury.git",
+    "url": "git+https://github.com/roedyrustam/centaury.git",
     "directory": "packages/sse"
   },
   "publishConfig": {

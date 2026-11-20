@@ -25,13 +25,13 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@rudyrustam/core": "workspace:*"
+    "@rudyrustam/core": "^1.2.0-alpha"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/roedyrustam/centaury.git",
+    "url": "git+https://github.com/roedyrustam/centaury.git",
     "directory": "packages/cli"
   },
   "publishConfig": {

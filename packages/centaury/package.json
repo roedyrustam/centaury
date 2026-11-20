@@ -22,22 +22,22 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@rudyrustam/cli": "workspace:*",
-    "@rudyrustam/core": "workspace:*",
-    "@rudyrustam/signals": "workspace:*",
-    "@rudyrustam/ephemeral": "workspace:*",
-    "@rudyrustam/astra": "workspace:*",
-    "@rudyrustam/agent": "workspace:*",
-    "@rudyrustam/sse": "workspace:*",
-    "@rudyrustam/db": "workspace:*",
-    "@rudyrustam/auth": "workspace:*",
-    "@rudyrustam/workflow": "workspace:*"
+    "@rudyrustam/cli": "^1.2.0-alpha",
+    "@rudyrustam/core": "^1.2.0-alpha",
+    "@rudyrustam/signals": "^1.2.0-alpha",
+    "@rudyrustam/ephemeral": "^1.2.0-alpha",
+    "@rudyrustam/astra": "^1.2.0-alpha",
+    "@rudyrustam/agent": "^1.2.0-alpha",
+    "@rudyrustam/sse": "^1.2.0-alpha",
+    "@rudyrustam/db": "^1.2.0-alpha",
+    "@rudyrustam/auth": "^1.2.0-alpha",
+    "@rudyrustam/workflow": "^1.2.0-alpha"
   },
   "author": "Roedy Rustam & Antigravity",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/roedyrustam/centaury.git",
+    "url": "git+https://github.com/roedyrustam/centaury.git",
     "directory": "packages/centaury"
   },
   "publishConfig": {

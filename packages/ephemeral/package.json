@@ -21,7 +21,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@rudyrustam/signals": "workspace:*"
+    "@rudyrustam/signals": "^1.2.0-alpha"
   },
   "devDependencies": {
     "happy-dom": "^17.1.8"
@@ -30,7 +30,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/roedyrustam/centaury.git",
+    "url": "git+https://github.com/roedyrustam/centaury.git",
     "directory": "packages/ephemeral"
   },
   "publishConfig": {
