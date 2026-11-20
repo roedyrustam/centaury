@@ -95,7 +95,7 @@ Centaury is an autonomous, ultra-lightweight fullstack web and agentic framework
 | **WASM Core** | Rust compiled to WebAssembly | High-speed cryptographic validation, token parsing, and secure isolation. |
 | **Frontend Reactive** | Centaury Micro-Signals | Pure reactivity without Virtual DOM; updates DOM nodes at atomic precision. |
 | **UI Primitives** | Native Web Components & CSS 2026 | No framework vendor lock-in, zero hydration overhead, ultra-fast browser rendering. |
-| **AI Frontier** | Gemini 4 Pro & Project Astra | Flagship System-2 reasoning (thinking budget up to 64k) + low-latency multimodal live streaming. |
+| **AI Frontier** | Gemini 4 (Argon/Carbon/Pro), Claude 5.5, Grok 4.7 & Astra | 4-tier adaptive cascade, automatic availability fallback (`3.8 Flash` / `Opus 4.6`), thinking budgets up to 64k, canonical KV-cache pinning & strict Zod JSON decoding. |
 | **Storage & Memory** | Embedded SQLite / Turso + pgvector | Zero-config local persistence, vector embeddings for episodic agent memory. |
 
 ---

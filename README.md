@@ -9,7 +9,7 @@
 
 [![GitHub Stars](https://img.shields.io/github/stars/roedyrustam/centaury?style=for-the-badge&logo=github&color=06b6d4)](https://github.com/roedyrustam/centaury/stargazers)
 [![CI Quality Gate](https://img.shields.io/github/actions/workflow/status/roedyrustam/centaury/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=CI%20Gate&color=10b981)](https://github.com/roedyrustam/centaury/actions)
-[![Tests Passing](https://img.shields.io/badge/tests-100%2F100%20passing-10b981.svg?style=for-the-badge&logo=bun)](https://github.com/roedyrustam/centaury)
+[![Tests Passing](https://img.shields.io/badge/tests-103%2F103%20passing-10b981.svg?style=for-the-badge&logo=bun)](https://github.com/roedyrustam/centaury)
 [![Runtime](https://img.shields.io/badge/Runtime-Bun%201.3%2B-f472b6.svg?style=for-the-badge&logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8%20Strict-3178c6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-v1.x%20Dual--Citizen-8b5cf6.svg?style=for-the-badge)](https://modelcontextprotocol.io/)
@@ -197,16 +197,18 @@ audio.onVoiceActivity((energy) => {
 const targetBox = vision.mapNormalizedToPixels({ ymin: 200, xmin: 150, ymax: 400, xmax: 600 }, 1920, 1080);
 ```
 
-### 5. `@rudyrustam/agent` — Dual-Citizen MCP v1.x, AI Gateway, Prompt Firewall & Self-Healer
-Official Model Context Protocol server (`/.well-known/mcp.json` + HTTP JSON-RPC `mcpPlugin('/mcp')`), `CentauryAIGateway` (Gemini/OpenAI-compatible/Mock with automatic fallback & KV-cache prefix hashing), runtime `CentauryPromptFirewall` (injection/SSRF/PII guard + `centaury_audit_prompt`), and source-aware `CentaurySelfHealer` + `selfHealingPlugin` (`/_heal/diagnostics`).
+### 5. `@rudyrustam/agent` — Dual-Citizen MCP v1.x, Frontier AI Gateway, Prompt Firewall & Self-Healer
+Official Model Context Protocol server (`/.well-known/mcp.json`, canonical sorted `POST /mcp`, and Frontier routing/KV-prefix tools), `CentauryAIGateway` supporting native **Google Gemini**, **Anthropic Messages** (prompt caching + extended thinking + tool-forced structured output), **xAI Grok**, **OpenAI-compatible**, and **Mock** providers with 4-tier cascade routing (`scoreComplexity` + `evaluateQualityGate`), dynamic thinking budgets (`resolveThinkingBudget`), availability fallback (`Gemini 4 -> Gemini 3.8 Flash`, `Claude 5.5 -> Claude Opus 4.6`), strict Zod JSON decoding (`generateStructured`), SSE streaming (`generateStream`), `CentauryPromptFirewall`, and source-aware `CentaurySelfHealer`.
 
 ```ts
-import { CentauryMCPServer, CentauryPromptFirewall, CentauryAIGateway, mcpPlugin, selfHealingPlugin } from '@rudyrustam/agent';
+import { CentauryMCPServer, CentauryAIGateway, mcpPlugin, selfHealingPlugin } from '@rudyrustam/agent';
 
 app.usePlugin(selfHealingPlugin({ workspaceRoot: import.meta.dir }));
 const mcp = new CentauryMCPServer(app);
 app.usePlugin(mcpPlugin(mcp, { path: '/mcp' }));
-const gw = new CentauryAIGateway({ provider: { kind: 'gemini', model: 'gemini-2.5-pro' } });
+const gw = new CentauryAIGateway({
+  provider: { kind: 'gemini', model: 'gemini-4-argon-medium', thinkingProfile: 'balanced' },
+});
 ```
 
 ### 6. `@rudyrustam/cli` — Developer Tooling
@@ -290,7 +292,7 @@ Navigate to **`http://localhost:3000`** to experience:
 Centaury enforces strict quality gates across all packages:
 
 ```bash
-# Run all 100 unit & integration tests
+# Run all 103 unit & integration tests (507 assertions)
 bun test
 
 # Strict TypeScript typechecking (0 errors)

@@ -313,6 +313,55 @@ document.addEventListener('DOMContentLoaded', () => {
     if (workflowOutputEl) workflowOutputEl.textContent = JSON.stringify(json, null, 2);
   });
 
+  // 8.5 Frontier LLM Cascade & Structured Output Handlers
+  const inputFrontierPrompt = document.getElementById('input-frontier-prompt');
+  const chkMissionCritical = document.getElementById('chk-mission-critical');
+  const frontierOutputEl = document.getElementById('frontier-output');
+
+  document.getElementById('btn-route-frontier')?.addEventListener('click', async () => {
+    const prompt = inputFrontierPrompt?.value || 'Health check';
+    const isMissionCritical = Boolean(chkMissionCritical?.checked);
+    log(`Routing frontier model cascade (missionCritical=${isMissionCritical})...`, 'agent');
+    const res = await fetch('/rpc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        procedure: 'ai.routeFrontier',
+        input: {
+          prompt,
+          fileCount: isMissionCritical ? 6 : 2,
+          hasSecurityDomain: /auth|security|payment|rls/i.test(prompt),
+          isMissionCritical,
+        },
+      }),
+    });
+    const json = await res.json();
+    if (frontierOutputEl) frontierOutputEl.textContent = JSON.stringify(json.data, null, 2);
+    log(
+      `[Frontier Cascade] tier=${json.data?.routing?.tier} model=${json.data?.routing?.recommendedModel} fallback=${json.data?.routing?.fallbackModel ?? 'none'} budget=${json.data?.thinking?.budgetTokens}`,
+      'success'
+    );
+  });
+
+  document.getElementById('btn-structured-output')?.addEventListener('click', async () => {
+    const prompt = inputFrontierPrompt?.value || 'Evaluate deployment safety';
+    log('Executing grammar-constrained ai.generateStructured...', 'agent');
+    const res = await fetch('/rpc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        procedure: 'ai.generateStructured',
+        input: { prompt },
+      }),
+    });
+    const json = await res.json();
+    if (frontierOutputEl) frontierOutputEl.textContent = JSON.stringify(json.data, null, 2);
+    log(
+      `[Structured Contract] schemaValid=${json.data?.schemaValid} model=${json.data?.model} kvHash=${String(json.data?.kvCachePrefixHash || '').slice(0, 10)}`,
+      'success'
+    );
+  });
+
   // 9. Ambient VAD Meter Animation (Simulating Audio Sensor Loop)
   setInterval(() => {
     const currentText = vadEnergyReading.textContent || '';

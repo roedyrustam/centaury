@@ -19,12 +19,41 @@ export interface ProcedureMetadata {
   inputSchema: Record<string, unknown>;
 }
 
+export interface ZodToJsonSchemaOptions {
+  /** Enforce closed object schemas (additionalProperties: false, all properties required) for LLM structured decoding. */
+  strict?: boolean;
+  /** Sort object property keys alphabetically for deterministic KV-cache prefix hashing. */
+  sortKeys?: boolean;
+}
+
+export type ZodSchemaInput =
+  | z.ZodTypeAny
+  | { _def?: object; description?: string };
+
+function ensureNullableSchema(inner: Record<string, unknown>): Record<string, unknown> {
+  if (Array.isArray(inner.anyOf)) {
+    const hasNull = inner.anyOf.some(
+      (item) => typeof item === 'object' && item !== null && (item as Record<string, unknown>).type === 'null'
+    );
+    return hasNull ? inner : { anyOf: [...inner.anyOf, { type: 'null' }] };
+  }
+  if (inner.type === 'null') {
+    return inner;
+  }
+  return { anyOf: [inner, { type: 'null' }] };
+}
+
 /**
- * Convert a Zod schema into a compact JSON Schema 2020-12 / MCP compatible descriptor without external deps.
+ * Convert a Zod schema into a compact JSON Schema 2020-12 / MCP / Frontier Structured Output compatible descriptor.
  */
-export function zodToJsonSchema(schema?: z.ZodTypeAny): Record<string, unknown> {
+export function zodToJsonSchema(
+  schema?: ZodSchemaInput,
+  options?: ZodToJsonSchemaOptions
+): Record<string, unknown> {
   if (!schema) {
-    return { type: 'object', properties: {} };
+    return options?.strict
+      ? { type: 'object', properties: {}, required: [], additionalProperties: false }
+      : { type: 'object', properties: {} };
   }
 
   const def = (schema as unknown as { _def?: Record<string, any> })._def;
@@ -33,17 +62,21 @@ export function zodToJsonSchema(schema?: z.ZodTypeAny): Record<string, unknown> 
     desc ? { ...obj, description: desc } : obj;
 
   if (!def || !def.typeName) {
-    return withDesc({ type: 'object', properties: {} });
+    return withDesc(
+      options?.strict
+        ? { type: 'object', properties: {}, required: [], additionalProperties: false }
+        : { type: 'object', properties: {} }
+    );
   }
 
   switch (def.typeName) {
     case 'ZodOptional':
     case 'ZodDefault':
-      return withDesc(zodToJsonSchema(def.innerType));
+      return withDesc(zodToJsonSchema(def.innerType, options));
 
     case 'ZodNullable': {
-      const inner = zodToJsonSchema(def.innerType);
-      return withDesc({ anyOf: [inner, { type: 'null' }] });
+      const inner = zodToJsonSchema(def.innerType, options);
+      return withDesc(ensureNullableSchema(inner));
     }
 
     case 'ZodString':
@@ -73,33 +106,68 @@ export function zodToJsonSchema(schema?: z.ZodTypeAny): Record<string, unknown> 
     case 'ZodArray':
       return withDesc({
         type: 'array',
-        items: zodToJsonSchema(def.type),
+        items: zodToJsonSchema(def.type, options),
       });
 
     case 'ZodRecord':
       return withDesc({
         type: 'object',
-        additionalProperties: def.valueType ? zodToJsonSchema(def.valueType) : true,
+        additionalProperties: def.valueType ? zodToJsonSchema(def.valueType, options) : true,
       });
 
     case 'ZodUnion':
       return withDesc({
-        anyOf: Array.isArray(def.options) ? def.options.map((opt: z.ZodTypeAny) => zodToJsonSchema(opt)) : [],
+        anyOf: Array.isArray(def.options)
+          ? def.options.map((opt: z.ZodTypeAny) => zodToJsonSchema(opt, options))
+          : [],
       });
 
     case 'ZodObject': {
       const shapeFn = def.shape;
-      const shape: Record<string, z.ZodTypeAny> =
+      const shape: Record<string, ZodSchemaInput> =
         typeof shapeFn === 'function' ? shapeFn() : shapeFn && typeof shapeFn === 'object' ? shapeFn : {};
+      let entries = Object.entries(shape);
+      if (options?.strict || options?.sortKeys) {
+        entries = entries.sort(([a], [b]) => a.localeCompare(b));
+      }
+
       const properties: Record<string, unknown> = {};
       const required: string[] = [];
 
-      for (const [key, fieldSchema] of Object.entries(shape)) {
-        properties[key] = zodToJsonSchema(fieldSchema);
-        const fieldType = (fieldSchema as unknown as { _def?: { typeName?: string } })._def?.typeName;
-        if (fieldType !== 'ZodOptional' && fieldType !== 'ZodDefault') {
+      for (const [key, fieldSchema] of entries) {
+        const fieldDef = (fieldSchema as unknown as { _def?: Record<string, any> })._def;
+        const fieldType = fieldDef?.typeName as string | undefined;
+        const isOptional = fieldType === 'ZodOptional' || fieldType === 'ZodDefault';
+
+        if (options?.strict) {
+          if (isOptional && fieldDef?.innerType) {
+            const innerDesc =
+              (fieldSchema as { description?: string }).description ?? (fieldDef?.description as string | undefined);
+            const innerJson = zodToJsonSchema(fieldDef.innerType, options);
+            const nullableProp = ensureNullableSchema(innerJson);
+            properties[key] =
+              innerDesc && !nullableProp.description
+                ? { ...nullableProp, description: innerDesc }
+                : nullableProp;
+          } else {
+            properties[key] = zodToJsonSchema(fieldSchema, options);
+          }
           required.push(key);
+        } else {
+          properties[key] = zodToJsonSchema(fieldSchema, options);
+          if (!isOptional) {
+            required.push(key);
+          }
         }
+      }
+
+      if (options?.strict) {
+        return withDesc({
+          type: 'object',
+          properties,
+          required,
+          additionalProperties: false,
+        });
       }
 
       return withDesc({
@@ -110,7 +178,11 @@ export function zodToJsonSchema(schema?: z.ZodTypeAny): Record<string, unknown> 
     }
 
     default:
-      return withDesc({ type: 'object', properties: {} });
+      return withDesc(
+        options?.strict
+          ? { type: 'object', properties: {}, required: [], additionalProperties: false }
+          : { type: 'object', properties: {} }
+      );
   }
 }
 

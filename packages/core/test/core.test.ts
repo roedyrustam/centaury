@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 import { mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { CENTAURY_ENGINE_LABEL, createRpcClient } from '../src/index';
+import { CENTAURY_ENGINE_LABEL, createRpcClient, zodToJsonSchema } from '../src/index';
 import { CentauryServer } from '../src/server';
 import { securityHeadersPlugin, rateLimiterPlugin } from '../src/plugins';
 import { z } from 'zod';
@@ -112,6 +112,22 @@ describe('@centaury/core Micro-Kernel Engine', () => {
     expect(calcTool.inputSchema.type).toBe('object');
     expect(calcTool.inputSchema.properties.a.type).toBe('number');
     expect(calcTool.inputSchema.required).toEqual(['a', 'b', 'op']);
+
+    const strictSchema = zodToJsonSchema(
+      z.object({
+        zLast: z.string().optional(),
+        aFirst: z.number().int(),
+        mMiddle: z.string().nullable().default('ok'),
+      }),
+      { strict: true }
+    ) as any;
+
+    expect(strictSchema.additionalProperties).toBe(false);
+    expect(strictSchema.required).toEqual(['aFirst', 'mMiddle', 'zLast']);
+    expect(Object.keys(strictSchema.properties)).toEqual(['aFirst', 'mMiddle', 'zLast']);
+    expect(strictSchema.properties.aFirst.type).toBe('integer');
+    expect(strictSchema.properties.zLast.anyOf).toEqual([{ type: 'string' }, { type: 'null' }]);
+    expect(strictSchema.properties.mMiddle.anyOf).toEqual([{ type: 'string' }, { type: 'null' }]);
   });
 
   it('upgrades WebSocket connection for real-time live bus', async () => {

@@ -9,3 +9,4 @@ export * from './mcp';
 export * from './firewall';
 export * from './self-heal';
 export * from './ai-gateway';
+export * from './frontier';

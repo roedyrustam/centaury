@@ -52,12 +52,13 @@ c:\centaury/
 │   │   └── package.json
 │   ├── agent/                 # Dual-Citizen MCP v1.x, AST Reflector, Prompt Firewall & Self-Healer
 │   │   ├── src/
-│   │   │   ├── mcp.ts         # Model Context Protocol server endpoints & tools
+│   │   │   ├── mcp.ts         # Canonical sorted MCP server endpoints & frontier tools
 │   │   │   ├── inspector.ts   # Live route & schema reflection
 │   │   │   ├── memory.ts      # Episodic vector memory connector
 │   │   │   ├── firewall.ts    # Prompt injection, SSRF & PII sanitization firewall
 │   │   │   ├── self-heal.ts   # Autonomous crash diagnostics, workspace sourceContext & recovery
-│   │   │   ├── ai-gateway.ts  # Frontier AI Gateway (Gemini / OpenAI-compatible / Mock + fallback)
+│   │   │   ├── frontier.ts    # 4-tier cascade, thinking budgets, KV-cache compiler & strict schema contracts
+│   │   │   ├── ai-gateway.ts  # Native Frontier Gateway (Gemini/Anthropic/xAI/OpenAI/Mock + SSE streaming)
 │   │   │   └── index.ts
 │   │   └── package.json
 │   ├── sse/                   # Native Bun SSE Event Bus & Browser Client

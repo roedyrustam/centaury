@@ -279,7 +279,13 @@ console.log('🌌 Centaury minimal server running at http://localhost:3000');
   } else if (options.template === 'agentic') {
     defaultRpcProc = 'analyzeAgentState';
     serverCode = `import { CentauryServer } from '@rudyrustam/core';
-import { CentauryMCPServer, mcpPlugin, selfHealingPlugin } from '@rudyrustam/agent';
+import {
+  CentauryMCPServer,
+  mcpPlugin,
+  resolveThinkingBudget,
+  scoreComplexity,
+  selfHealingPlugin,
+} from '@rudyrustam/agent';
 import { legalCompliancePlugin } from '@rudyrustam/auth';
 import { a2aPlugin } from '@rudyrustam/workflow';
 import { z } from 'zod';
@@ -288,7 +294,7 @@ import { join } from 'path';
 const app = new CentauryServer({
   port: 3000,
   ai: {
-    model: 'gemini-4-pro',
+    model: 'gemini-4-argon-medium',
     thinkingBudget: 16384,
   },
 });
@@ -318,14 +324,20 @@ app.get('/', async () => {
 });
 
 app.rpc('analyzeAgentState', {
-  description: 'Audit and evaluate agent state query',
+  description: 'Audit and evaluate agent state query with Frontier tier & thinking budget routing',
   inputSchema: z.object({ query: z.string() }),
-  handler: ({ input }) => ({
-    status: 'optimal',
-    query: input.query,
-    firewall: mcp.firewall.inspectPrompt(input.query),
-    timestamp: Date.now(),
-  }),
+  handler: ({ input }) => {
+    const routing = scoreComplexity({ promptChars: input.query.length });
+    const thinking = resolveThinkingBudget({ complexityTier: routing.tier, promptChars: input.query.length });
+    return {
+      status: 'optimal',
+      query: input.query,
+      firewall: mcp.firewall.inspectPrompt(input.query),
+      routing,
+      thinking,
+      timestamp: Date.now(),
+    };
+  },
 });
 
 app.listen();

@@ -8,6 +8,16 @@ import { CentauryInspector } from './inspector';
 import { CentauryAgentMemory } from './memory';
 import { CentauryPromptFirewall } from './firewall';
 import { CentaurySelfHealer } from './self-heal';
+import {
+  AVAILABILITY_FALLBACK_MATRIX,
+  FRONTIER_MODEL_REGISTRY,
+  type ModelTier,
+  type ThinkingProfile,
+  compileCanonicalPrefix,
+  resolveThinkingBudget,
+  scoreComplexity,
+  sortToolsCanonically,
+} from './frontier';
 
 export interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -74,7 +84,7 @@ export class CentauryMCPServer {
             jsonrpc: '2.0',
             id: req.id,
             result: {
-              tools: [
+              tools: sortToolsCanonically([
                 {
                   name: 'centaury_list_routes',
                   description: 'List all registered HTTP and WebSocket routes in Centaury',
@@ -157,7 +167,49 @@ export class CentauryMCPServer {
                     },
                   },
                 },
-              ],
+                {
+                  name: 'centaury_route_frontier_model',
+                  description: 'Score complexity across 4 tiers and resolve dynamic System-2 thinking budget + availability fallback',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      promptChars: { type: 'number', description: 'Length of incoming prompt in characters' },
+                      fileCount: { type: 'number', description: 'Number of files touched by the task' },
+                      hasSecurityDomain: { type: 'boolean', description: 'Whether task involves auth/payments/security' },
+                      hasMultiDomain: { type: 'boolean', description: 'Whether task spans multiple domains' },
+                      requiresArchitecture: { type: 'boolean', description: 'Whether architectural design is required' },
+                      requiresRealtimeWeb: { type: 'boolean', description: 'Whether realtime web compute is needed' },
+                      requiresMonolithicContext: { type: 'boolean', description: 'Whether 1M-2M+ context window is needed' },
+                      isMissionCritical: { type: 'boolean', description: 'Enforces >=32,768 thinking token floor when true' },
+                      requiresFormalProof: { type: 'boolean', description: 'Selects exhaustive 65,536 thinking budget' },
+                      thinkingProfileOverride: { type: 'string', description: 'Optional profile: speed | balanced | deep | exhaustive' },
+                    },
+                    required: ['promptChars'],
+                  },
+                },
+                {
+                  name: 'centaury_compile_kv_prefix',
+                  description: 'Compile a canonical sorted KV-cache prefix with SHA-256 hash and volatile-token audit',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      directives: { type: 'string', description: 'Static system directives text' },
+                      contextMap: { type: 'object', description: 'Static architectural context map JSON object' },
+                    },
+                    required: ['directives'],
+                  },
+                },
+                {
+                  name: 'centaury_list_frontier_models',
+                  description: 'List the late-2026 Frontier LLM registry and deterministic availability fallback matrix',
+                  inputSchema: {
+                    type: 'object',
+                    properties: {
+                      tier: { type: 'string', description: 'Optional tier filter: FAST | HIGH_FAST | MEDIUM | HIGH' },
+                    },
+                  },
+                },
+              ]),
             },
           };
 
@@ -299,6 +351,56 @@ export class CentauryMCPServer {
       case 'centaury_get_healing_diagnostics': {
         const limit = Number(args.limit) || 20;
         return this.healer.getDiagnostics(limit);
+      }
+
+      case 'centaury_route_frontier_model': {
+        const promptChars = Number(args.promptChars ?? 0);
+        const fileCount = typeof args.fileCount === 'number' ? args.fileCount : undefined;
+        const routing = scoreComplexity({
+          promptChars,
+          fileCount,
+          hasSecurityDomain: Boolean(args.hasSecurityDomain),
+          hasMultiDomain: Boolean(args.hasMultiDomain),
+          requiresArchitecture: Boolean(args.requiresArchitecture),
+          requiresRealtimeWeb: Boolean(args.requiresRealtimeWeb),
+          requiresMonolithicContext: Boolean(args.requiresMonolithicContext),
+        });
+        const thinking = resolveThinkingBudget(
+          {
+            complexityTier: routing.tier,
+            fileCount,
+            promptChars,
+            isMissionCritical: Boolean(args.isMissionCritical),
+            requiresFormalProof: Boolean(args.requiresFormalProof),
+          },
+          args.thinkingProfileOverride as ThinkingProfile | undefined
+        );
+        return { routing, thinking };
+      }
+
+      case 'centaury_compile_kv_prefix': {
+        const directives = String(args.directives ?? '');
+        const contextMap =
+          args.contextMap && typeof args.contextMap === 'object'
+            ? (args.contextMap as Record<string, unknown>)
+            : undefined;
+        const compiled = compileCanonicalPrefix({ directives, contextMap });
+        return {
+          ...compiled.audit,
+          prefix: compiled.prefix,
+        };
+      }
+
+      case 'centaury_list_frontier_models': {
+        const tierFilter = args.tier ? (String(args.tier).toUpperCase() as ModelTier) : undefined;
+        const models = Object.values(FRONTIER_MODEL_REGISTRY).filter((m) =>
+          tierFilter ? m.tier === tierFilter : true
+        );
+        return {
+          count: models.length,
+          models,
+          availabilityFallbackMatrix: AVAILABILITY_FALLBACK_MATRIX,
+        };
       }
 
       default:

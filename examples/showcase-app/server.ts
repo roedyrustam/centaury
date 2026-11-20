@@ -10,7 +10,10 @@ import {
   CentauryPromptFirewall,
   CentaurySelfHealer,
   CentauryAIGateway,
+  FRONTIER_MODEL_REGISTRY,
   mcpPlugin,
+  resolveThinkingBudget,
+  scoreComplexity,
   selfHealingPlugin,
 } from '@rudyrustam/agent';
 import { AstraGateway } from '@rudyrustam/astra';
@@ -48,14 +51,32 @@ const gateway = new CentauryAIGateway({
   provider: process.env.GEMINI_API_KEY
     ? {
         kind: 'gemini',
-        model: 'gemini-2.5-pro',
+        model: 'gemini-4-argon-medium',
         apiKey: process.env.GEMINI_API_KEY,
-        thinkingBudget: 8192,
+        thinkingProfile: 'balanced',
+        autoAvailabilityFallback: true,
       }
-    : {
-        kind: 'mock',
-        model: 'centaury-nexus-mock',
-      },
+    : process.env.ANTHROPIC_API_KEY
+      ? {
+          kind: 'anthropic',
+          model: 'claude-sonnet-5.5-high',
+          apiKey: process.env.ANTHROPIC_API_KEY,
+          thinkingProfile: 'deep',
+          autoAvailabilityFallback: true,
+        }
+      : {
+          kind: 'mock',
+          model: 'gemini-4-argon-medium',
+          thinkingProfile: 'balanced',
+          autoAvailabilityFallback: true,
+        },
+  fallbackProviders: [{ kind: 'mock', model: 'centaury-local-fallback' }],
+  contextMap: {
+    framework: CENTAURY_ENGINE_LABEL,
+    packages: 11,
+    runtime: 'bun',
+    zeroHydration: true,
+  },
   firewall,
 });
 
@@ -190,8 +211,10 @@ app.rpc('system.getMetrics', {
       uptimeSeconds: Math.round(process.uptime()),
       memoryRssMb: Math.round(mem.rss / 1024 / 1024),
       heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
-      activeModel: 'Gemini 4 Pro (Thinking Budget: 32,768)',
-      kvCacheStatus: `Locked (${gateway.kvCachePrefixHash.slice(0, 10)})`,
+      activeModel: 'Gemini 4 Argon / Pro + Claude 5.5 + Grok 4.7 Cascade',
+      kvCacheStatus: `${gateway.kvPrefixAudit.stable ? 'Locked' : 'Warning'} (${gateway.kvCachePrefixHash.slice(0, 10)})`,
+      kvPrefixStable: gateway.kvPrefixAudit.stable,
+      frontierRegistryCount: Object.keys(FRONTIER_MODEL_REGISTRY).length,
       multimodalLatency: '42ms',
       database: 'Bun SQLite (WAL Mode)',
     };
@@ -216,7 +239,7 @@ app.rpc('agent.recallMemory', {
   }),
   handler: async ({ input }) => {
     const embedding = await makeEmbedding(input.query);
-    const results = memory.recallRelevantTurns(input.sessionId, embedding, 5, 0.0);
+    const results = memory.recallRelevantTurns(input.sessionId ?? 'showcase-session', embedding, 5, 0.0);
     return {
       query: input.query,
       resultsCount: results.length,
@@ -237,6 +260,62 @@ app.rpc('ai.generate', {
   }),
   handler: async ({ input }) => {
     return await gateway.generate({ prompt: input.prompt });
+  },
+});
+
+const ShowcaseDecisionSchema = z.object({
+  summary: z.string(),
+  riskLevel: z.enum(['low', 'medium', 'high']),
+  recommendedAction: z.string(),
+});
+
+app.rpc('ai.routeFrontier', {
+  description: 'Route complexity across 4 Frontier tiers and resolve dynamic Thinking Budget + Availability Fallback',
+  inputSchema: z.object({
+    prompt: z.string().min(1),
+    fileCount: z.number().default(1),
+    hasSecurityDomain: z.boolean().default(false),
+    requiresMonolithicContext: z.boolean().default(false),
+    requiresRealtimeWeb: z.boolean().default(false),
+    isMissionCritical: z.boolean().default(false),
+  }),
+  handler: ({ input }) => {
+    const fileCount = input.fileCount ?? 1;
+    const routing = scoreComplexity({
+      promptChars: input.prompt.length,
+      fileCount,
+      hasSecurityDomain: input.hasSecurityDomain,
+      hasMultiDomain: fileCount >= 3,
+      requiresArchitecture: fileCount >= 4,
+      requiresMonolithicContext: input.requiresMonolithicContext,
+      requiresRealtimeWeb: input.requiresRealtimeWeb,
+    });
+    const thinking = resolveThinkingBudget({
+      complexityTier: routing.tier,
+      fileCount,
+      promptChars: input.prompt.length,
+      isMissionCritical: input.isMissionCritical,
+    });
+    return {
+      routing,
+      thinking,
+      kvCachePrefixHash: gateway.kvCachePrefixHash,
+      kvPrefixStable: gateway.kvPrefixAudit.stable,
+    };
+  },
+});
+
+app.rpc('ai.generateStructured', {
+  description: 'Execute grammar-constrained strict JSON decoding validated by Zod schema contract',
+  inputSchema: z.object({
+    prompt: z.string().min(1),
+  }),
+  handler: async ({ input }) => {
+    return await gateway.generateStructured(
+      { prompt: input.prompt },
+      ShowcaseDecisionSchema,
+      { schemaName: 'showcase_operational_decision' }
+    );
   },
 });
 
@@ -344,7 +423,10 @@ app.rpc('workflow.runDemo', {
         trace: [...ctx.trace, 'synthesized:ephemeral-ready'],
       }));
 
-    return await demoFlow.run(input.runId, { task: input.task, trace: [] });
+    return await demoFlow.run(input.runId ?? `demo-${crypto.randomUUID().slice(0, 8)}`, {
+      task: input.task ?? 'verify-system',
+      trace: [],
+    });
   },
 });
 

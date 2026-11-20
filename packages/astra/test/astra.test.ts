@@ -6,7 +6,14 @@
 import { describe, it, expect } from 'bun:test';
 import { AstraAudioPipeline } from '../src/audio';
 import { AstraVisionPipeline } from '../src/vision';
-import { AstraGateway } from '../src/live';
+import {
+  AstraGateway,
+  createGeminiAudioInputFrame,
+  createGeminiClientTextFrame,
+  createGeminiLiveSetupMessage,
+  createGeminiVideoInputFrame,
+  parseGeminiLiveServerMessage,
+} from '../src/live';
 
 describe('@centaury/astra Audio Pipeline & VAD Interruption', () => {
   it('calculates near-zero RMS energy for silent PCM buffer', () => {
@@ -113,5 +120,63 @@ describe('@centaury/astra Multimodal Live Gateway', () => {
     const interruption = gateway.createInterruptionPayload();
     expect(interruption.type).toBe('astra.interruption');
     expect(interruption.action).toBe('cutoff_audio');
+  });
+
+  it('builds Gemini Multimodal Live setup/media frames and handles server interruptions + toolCalls', () => {
+    let interruptedCount = 0;
+    const gateway = new AstraGateway({
+      onInterruption: () => {
+        interruptedCount++;
+      },
+    });
+
+    const setup = createGeminiLiveSetupMessage({
+      model: 'models/gemini-4-pro-live',
+      systemInstruction: 'Respond concisely.',
+      voiceName: 'Aoede',
+    }) as any;
+    expect(setup.setup.model).toBe('models/gemini-4-pro-live');
+    expect(setup.setup.generationConfig.responseModalities).toEqual(['AUDIO']);
+
+    const audioFrame = createGeminiAudioInputFrame('AAAA', 16000) as any;
+    expect(audioFrame.realtimeInput.mediaChunks[0].mimeType).toBe('audio/pcm;rate=16000');
+
+    const videoFrame = createGeminiVideoInputFrame('BBBB', 'image/webp') as any;
+    expect(videoFrame.realtimeInput.mediaChunks[0].mimeType).toBe('image/webp');
+
+    const textFrame = createGeminiClientTextFrame('Inspect screen') as any;
+    expect(textFrame.clientContent.turnComplete).toBe(true);
+
+    expect((gateway.toUpstreamMediaFrame({ type: 'astra.audio', data: 'AAAA' }) as any).realtimeInput).toBeDefined();
+    expect((gateway.toUpstreamMediaFrame({ type: 'astra.frame', data: 'BBBB' }) as any).realtimeInput).toBeDefined();
+    expect((gateway.toUpstreamMediaFrame({ type: 'astra.text', data: 'hi' }) as any).clientContent).toBeDefined();
+
+    const parsedTurn = gateway.handleUpstreamServerMessage({
+      setupComplete: true,
+      serverContent: {
+        modelTurn: {
+          parts: [
+            { text: 'Scanning UI...' },
+            { inlineData: { mimeType: 'audio/pcm;rate=24000', data: 'PCM_OUT' } },
+          ],
+        },
+      },
+      toolCall: {
+        functionCalls: [{ id: 'tc-1', name: 'centaury_list_routes', args: { filter: '/api' } }],
+      },
+    });
+    expect(parsedTurn.setupComplete).toBe(true);
+    expect(parsedTurn.textChunks).toEqual(['Scanning UI...']);
+    expect(parsedTurn.audioChunks[0].mimeType).toBe('audio/pcm;rate=24000');
+    expect(parsedTurn.toolCalls[0].name).toBe('centaury_list_routes');
+
+    const interrupted = gateway.handleUpstreamServerMessage(
+      JSON.stringify({ serverContent: { interrupted: true, turnComplete: true } })
+    );
+    expect(interrupted.interrupted).toBe(true);
+    expect(interruptedCount).toBe(1);
+
+    const standalone = parseGeminiLiveServerMessage({ serverContent: { turnComplete: true } });
+    expect(standalone.turnComplete).toBe(true);
   });
 });

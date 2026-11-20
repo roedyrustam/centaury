@@ -13,7 +13,7 @@
 [Phase 13: @rudyrustam/workflow] <── [Phase 12: @rudyrustam/auth] <── [Phase 11: Self-Heal & Firewall] <── [Phase 9-10: SSE & DB]
          │
          v
-[Phase 14: 11-Package Sync & Showcase v2] ──> [Phase 15-17: v1.2.0-alpha Deep Hardening, AI Gateway & Parallel Saga]
+[Phase 14: 11-Package Sync & Showcase v2] ──> [Phase 15-17: v1.2.0-alpha Deep Hardening, AI Gateway & Parallel Saga] ──> [Phase 18: Frontier LLM Orchestration]
 ```
 
 ---
@@ -100,3 +100,8 @@
 - [x] **Phase 15 (Security & Correctness Hardening)**: Router backtracking/middleware fix, `zodToJsonSchema` di `/.well-known/mcp.json`, `createRpcClient()`, confinement-safe `serveStatic()`, `effect()` dependency cleanup, XSS hardening pada `<c-devtools>`, `@rudyrustam/ephemeral`, & `legalCompliancePlugin`, validasi identifier SQL & async migration transactions pada `@rudyrustam/db`, serta `alg === 'HS256'` & WebAuthn origin/pruning checks pada `@rudyrustam/auth`.
 - [x] **Phase 16 (Autonomous AI & Durable Orchestration)**: `CentauryAIGateway` (Gemini/OpenAI-compatible/Mock + fallback cascade + KV-cache hash), `mcpPlugin(mcp)` HTTP JSON-RPC `/mcp`, source-aware `CentaurySelfHealer` snippet context, SQLite-backed A2A persistence & SSE `/a2a/tasks/:id/events`, dan `.parallel()` workflow Saga fan-out.
 - [x] **Phase 17 (CLI v1.2, Umbrella Sync & Showcase v3)**: `centaury inspect [url]`, template `agentic`/`fullstack` tersinkronisasi v1.2, normalisasi `bin` path bebas warning npm, umbrella `@rudyrustam/centaury` mencakup seluruh 10 modul library, Showcase App v3, dan E2E check ganda (`fullstack` + `agentic`).
+
+### 🌐 Phase 18: Frontier LLM Parity & Multi-Provider Orchestration (`@rudyrustam/agent`, `@rudyrustam/core`, `@rudyrustam/astra`)
+- [x] **4-Tier Model Registry & Availability Fallback Invariant**: `FRONTIER_MODEL_REGISTRY` (Gemini 4 Argon/Neon/Carbon/Pro, Claude 5.5/5.1/4.6, Grok 4.7/4.6, GPT-5.6 Sol, Muse Wonder), `scoreComplexity()`, `evaluateQualityGate()` (<50ms heuristic escalation), serta fallback otomatis `404`/`429`/`503` (`Gemini 4 → Gemini 3.8 Flash`, `Claude 5.x → Claude Opus 4.6`).
+- [x] **Native Multi-Provider Gateway, Thinking Budgets & Strict Contracts**: Native Anthropic Messages (`cache_control: ephemeral`, extended thinking, forced `tool_use`), Gemini (`thinkingConfig`, `cachedContent`, `responseSchema`, SSE `:streamGenerateContent`), xAI/OpenAI (`reasoning_effort`, `json_schema strict: true`, SSE), `resolveThinkingBudget()` dengan batas minimum `>=32,768` pada tugas mission-critical, `zodToJsonSchema(..., { strict: true })`, `generateStructured<T>()`, dan audit KV-cache kanonis (`compileCanonicalPrefix`, `auditKvCachePrefix`).
+- [x] **Gemini Live Wire Protocol & MCP Frontier Tools**: Bi-directional wire frames pada `AstraGateway`, sorting alat MCP kanonis (`centaury_route_frontier_model`, `centaury_compile_kv_prefix`, `centaury_list_frontier_models`), dan Showcase/CLI integrasi penuh.
