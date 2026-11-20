@@ -1,18 +1,21 @@
 /**
  * @file server.ts
- * @description Centaury Showcase Application Server (Fullstack Demonstrator)
+ * @description Centaury Showcase Application Server (Fullstack Demonstrator v1.2)
  */
 
-import { CentauryServer } from '@rudyrustam/core';
+import { CENTAURY_ENGINE_LABEL, CENTAURY_VERSION, CentauryServer } from '@rudyrustam/core';
 import {
   CentauryMCPServer,
   CentauryAgentMemory,
   CentauryPromptFirewall,
   CentaurySelfHealer,
+  CentauryAIGateway,
+  mcpPlugin,
   selfHealingPlugin,
 } from '@rudyrustam/agent';
 import { AstraGateway } from '@rudyrustam/astra';
 import { CentauryDatabase } from '@rudyrustam/db';
+import { CentauryEventBus, ssePlugin } from '@rudyrustam/sse';
 import { legalCompliancePlugin } from '@rudyrustam/auth';
 import { a2aPlugin, CentauryWorkflowEngine } from '@rudyrustam/workflow';
 import { z } from 'zod';
@@ -29,19 +32,37 @@ const app = new CentauryServer({
   hostname: '0.0.0.0',
   ai: {
     model: 'gemini-4-pro',
-    thinkingBudget: 32768, // System-2 Deep Thinking
+    thinkingBudget: 32768,
   },
 });
 
-// Initialize Persistent Episodic Agent Memory backed by SQLite & Vector Store
+// Initialize Agent Memory, Firewall, Source-Aware Self-Healer, MCP, SSE Bus & AI Gateway
 const memory = new CentauryAgentMemory({ db });
 const firewall = new CentauryPromptFirewall();
-const healer = new CentaurySelfHealer();
+const healer = new CentaurySelfHealer({ workspaceRoot: import.meta.dir });
 const mcp = new CentauryMCPServer(app, memory, { firewall, healer });
+const bus = new CentauryEventBus();
 const workflowEngine = new CentauryWorkflowEngine({ db });
 
-// Install Self-Healing, Mandatory Legal Compliance Trio, and A2A Interoperability Plugins
+const gateway = new CentauryAIGateway({
+  provider: process.env.GEMINI_API_KEY
+    ? {
+        kind: 'gemini',
+        model: 'gemini-2.5-pro',
+        apiKey: process.env.GEMINI_API_KEY,
+        thinkingBudget: 8192,
+      }
+    : {
+        kind: 'mock',
+        model: 'centaury-nexus-mock',
+      },
+  firewall,
+});
+
+// Install Self-Healing, MCP JSON-RPC, SSE Event Bus, Mandatory Legal Compliance Trio, and A2A Plugins
 app.usePlugin(selfHealingPlugin(healer));
+app.usePlugin(mcpPlugin(mcp, { path: '/mcp' }));
+app.usePlugin(ssePlugin(bus, { basePath: '/sse' }));
 app.usePlugin(
   legalCompliancePlugin({
     appName: 'Centaury Showcase',
@@ -52,6 +73,7 @@ app.usePlugin(
   a2aPlugin({
     name: 'Centaury Showcase Agent',
     description: 'Dual-Citizen Fullstack, Guardrail & Durable Workflow Agent',
+    db,
     skills: [
       {
         id: 'audit_prompt',
@@ -66,44 +88,42 @@ app.usePlugin(
   })
 );
 
-// Helper to generate consistent 64-dim embeddings for demo
-function makeEmbedding(text: string): Float32Array {
-  const vec = new Float32Array(64);
-  for (let i = 0; i < text.length; i++) {
-    vec[i % 64] += text.charCodeAt(i) / 255;
-  }
-  return vec;
+// Helper to generate consistent 64-dim normalized embeddings for demo
+async function makeEmbedding(text: string): Promise<Float32Array> {
+  return await gateway.embed(text, 64);
 }
 
-// Seed initial reasoning turns for showcase episodic memory
-memory.storeTurn(
-  {
-    sessionId: 'showcase-session',
-    role: 'user',
-    content: 'Explain Centaury Zero-Hydration Micro-Signals and INP target',
-  },
-  makeEmbedding('Explain Centaury Zero-Hydration Micro-Signals and INP target')
-);
+// Seed initial reasoning turns for showcase episodic memory once cleanly
+if (memory.getSessionHistory('showcase-session', 1).length === 0) {
+  memory.storeTurn(
+    {
+      sessionId: 'showcase-session',
+      role: 'user',
+      content: 'Explain Centaury Zero-Hydration Micro-Signals and INP target',
+    },
+    await makeEmbedding('Explain Centaury Zero-Hydration Micro-Signals and INP target')
+  );
 
-memory.storeTurn(
-  {
-    sessionId: 'showcase-session',
-    role: 'agent',
-    content: 'Centaury Micro-Signals run in <1.5KB without Virtual DOM, guaranteeing INP < 50ms.',
-  },
-  makeEmbedding('Centaury Micro-Signals run in <1.5KB without Virtual DOM, guaranteeing INP < 50ms.')
-);
+  memory.storeTurn(
+    {
+      sessionId: 'showcase-session',
+      role: 'agent',
+      content: 'Centaury Micro-Signals run in <1.5KB without Virtual DOM, guaranteeing INP < 50ms.',
+    },
+    await makeEmbedding('Centaury Micro-Signals run in <1.5KB without Virtual DOM, guaranteeing INP < 50ms.')
+  );
 
-memory.storeTurn(
-  {
-    sessionId: 'showcase-session',
-    role: 'agent',
-    content: 'Gemini 4 Pro System-2 reasoning controls thinking budget up to 64k tokens.',
-  },
-  makeEmbedding('Gemini 4 Pro System-2 reasoning controls thinking budget up to 64k tokens.')
-);
+  memory.storeTurn(
+    {
+      sessionId: 'showcase-session',
+      role: 'agent',
+      content: 'Gemini 4 Pro System-2 reasoning controls thinking budget up to 64k tokens.',
+    },
+    await makeEmbedding('Gemini 4 Pro System-2 reasoning controls thinking budget up to 64k tokens.')
+  );
+}
 
-// Initialize Astra Multimodal Gateway
+// Initialize Astra Multimodal Gateway and wire incoming WebSocket frames
 const astra = new AstraGateway({
   vadThreshold: 0.045,
   onInterruption: () => {
@@ -115,8 +135,18 @@ const astra = new AstraGateway({
   },
 });
 
+app.onWebSocketMessage((_ws, parsed) => {
+  if (
+    parsed &&
+    (parsed.type === 'astra.audio' || parsed.type === 'astra.frame' || parsed.type === 'astra.text') &&
+    typeof parsed.data === 'string'
+  ) {
+    astra.handleClientMessage({ type: parsed.type, data: parsed.data });
+  }
+});
+
 // 1. Static Asset Routes
-app.get('/', async (ctx) => {
+app.get('/', async () => {
   const file = Bun.file(join(PUBLIC_DIR, 'index.html'));
   return new Response(file, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 });
@@ -154,13 +184,14 @@ app.rpc('system.getMetrics', {
     const mem = process.memoryUsage();
     return {
       status: 'nominal',
-      engine: 'Centaury 1.0.0-alpha',
+      engine: CENTAURY_ENGINE_LABEL,
+      version: CENTAURY_VERSION,
       runtime: `Bun ${Bun.version}`,
       uptimeSeconds: Math.round(process.uptime()),
       memoryRssMb: Math.round(mem.rss / 1024 / 1024),
       heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
       activeModel: 'Gemini 4 Pro (Thinking Budget: 32,768)',
-      kvCacheStatus: 'Locked (92% Hit Rate)',
+      kvCacheStatus: `Locked (${gateway.kvCachePrefixHash.slice(0, 10)})`,
       multimodalLatency: '42ms',
       database: 'Bun SQLite (WAL Mode)',
     };
@@ -183,12 +214,8 @@ app.rpc('agent.recallMemory', {
     sessionId: z.string().default('showcase-session'),
     query: z.string(),
   }),
-  handler: ({ input }) => {
-    // Generate pseudo-deterministic 64-dim embedding from query string for interactive demo
-    const embedding = new Float32Array(64);
-    for (let i = 0; i < input.query.length; i++) {
-      embedding[i % 64] += input.query.charCodeAt(i) / 255;
-    }
+  handler: async ({ input }) => {
+    const embedding = await makeEmbedding(input.query);
     const results = memory.recallRelevantTurns(input.sessionId, embedding, 5, 0.0);
     return {
       query: input.query,
@@ -200,6 +227,16 @@ app.rpc('agent.recallMemory', {
         content: r.metadata?.content,
       })),
     };
+  },
+});
+
+app.rpc('ai.generate', {
+  description: 'Execute prompt-firewalled text synthesis via CentauryAIGateway',
+  inputSchema: z.object({
+    prompt: z.string().min(1),
+  }),
+  handler: async ({ input }) => {
+    return await gateway.generate({ prompt: input.prompt });
   },
 });
 
@@ -230,7 +267,7 @@ app.rpc('ai.synthesizeUI', {
         '<ui-card elevation="glass">',
         '<ui-header title="Project Astra Telemetry" badge="Multimodal Live" />',
         '<ui-metric value="99.98% Fidelity" change="Sub-50ms TTFT" />',
-        '<p style="color: #94a3b8; font-size: 0.9rem; margin: 0.5rem 0;">Audio PCM 16kHz & Continuous Video frames synchronized via Centaury WebSocket.</p>',
+        '<p style="color: #94a3b8; font-size: 0.9rem; margin: 0.5rem 0;">Audio PCM 16kHz &amp; Continuous Video frames synchronized via Centaury WebSocket.</p>',
         '<ui-button action="trigger_scan" param=\'{"resolution":"4K"}\'>Execute Spatial Scan</ui-button>',
         '</ui-card>',
       ],
@@ -238,8 +275,8 @@ app.rpc('ai.synthesizeUI', {
         '<ui-card elevation="glass">',
         '<ui-header title="Super-Intelligence Nexus" badge="Singularity Ready" />',
         '<ui-metric value="Infinite Potential" change="ASI Epoch" />',
-        '<p style="color: #94a3b8; font-size: 0.9rem; margin: 0.5rem 0;">Fullstack Dual-Citizen Architecture: Humans & AI reasoning collaboratively in real-time.</p>',
-        '<ui-button action="singularity_ping" param=\'{"time":Date.now()}\'>Ping Super-Intelligence</ui-button>',
+        '<p style="color: #94a3b8; font-size: 0.9rem; margin: 0.5rem 0;">Fullstack Dual-Citizen Architecture: Humans &amp; AI reasoning collaboratively in real-time.</p>',
+        '<ui-button action="singularity_ping" param=\'{"mode":"singularity"}\'>Ping Super-Intelligence</ui-button>',
         '</ui-card>',
       ],
     };
@@ -250,7 +287,7 @@ app.rpc('ai.synthesizeUI', {
     (async () => {
       for (const chunk of chunks) {
         app.broadcast('ephemeral:chunk', { markup: chunk });
-        await Bun.sleep(60); // 60ms stream interval
+        await Bun.sleep(60);
       }
     })();
 
@@ -261,7 +298,6 @@ app.rpc('ai.synthesizeUI', {
 app.rpc('astra.simulateGrounding', {
   description: 'Simulate Project Astra visual screen grounding coordinates',
   handler: () => {
-    // Generate realistic bounding boxes around UI cards
     const sampleBoxes = [
       { ymin: 180, xmin: 50, ymax: 360, xmax: 480, label: 'Telemetry Card' },
       { ymin: 180, xmin: 520, ymax: 560, xmax: 950, label: 'Ephemeral Synthesizer' },
@@ -281,18 +317,28 @@ app.rpc('agent.auditPrompt', {
 });
 
 app.rpc('workflow.runDemo', {
-  description: 'Execute a checkpointed SQLite durable workflow demo with automatic rollback support',
+  description: 'Execute a checkpointed SQLite durable workflow demo with parallel branches & rollback support',
   inputSchema: z.object({
     runId: z.string().default(() => `demo-${crypto.randomUUID().slice(0, 8)}`),
     task: z.string().default('verify-system'),
   }),
   handler: async ({ input }) => {
     const demoFlow = workflowEngine
-      .createWorkflow<{ task: string; trace: string[] }>('showcase-demo')
+      .createWorkflow<{ task: string; trace: string[]; auditOk?: boolean; schemaOk?: boolean }>('showcase-demo')
       .step('audit_context', (ctx) => ({
         ...ctx,
         trace: [...ctx.trace, `audited:${ctx.task}`],
       }))
+      .parallel('parallel_checks', [
+        {
+          name: 'verify_firewall',
+          execute: (ctx) => ({ ...ctx, auditOk: true }),
+        },
+        {
+          name: 'verify_schemas',
+          execute: (ctx) => ({ ...ctx, schemaOk: true }),
+        },
+      ])
       .step('synthesize_artifact', (ctx) => ({
         ...ctx,
         trace: [...ctx.trace, 'synthesized:ephemeral-ready'],
@@ -305,19 +351,22 @@ app.rpc('workflow.runDemo', {
 // 4. Background Telemetry Broadcast Loop (every 1.5s)
 setInterval(() => {
   const mem = process.memoryUsage();
-  app.broadcast('telemetry', {
+  const snapshot = {
     memoryRssMb: Math.round(mem.rss / 1024 / 1024),
     heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
     uptimeSeconds: Math.round(process.uptime()),
     activeReqPerSec: Math.floor(Math.random() * 400 + 1200),
     cpuLoad: (Math.random() * 2 + 1.2).toFixed(1) + '%',
-  });
+  };
+  app.broadcast('telemetry', snapshot);
+  bus.publish('telemetry', { event: 'metrics', data: snapshot });
 }, 1500);
 
 // Start server
 const instance = app.listen();
 console.log(`\n🌌 ========================================================`);
-console.log(`🌌 Centaury Showcase Server running at: http://localhost:${instance.port}`);
-console.log(`🌌 Model: Gemini 4 Pro | Thinking Budget: 32,768`);
-console.log(`🌌 MCP Endpoint: http://localhost:${instance.port}/.well-known/mcp.json`);
+console.log(`🌌 Centaury Showcase (${CENTAURY_ENGINE_LABEL}) at: http://localhost:${instance.port}`);
+console.log(`🌌 MCP JSON-RPC  : http://localhost:${instance.port}/mcp`);
+console.log(`🌌 A2A Discovery : http://localhost:${instance.port}/.well-known/agent.json`);
+console.log(`🌌 Legal Trio    : /privacy  |  /terms  |  /delete-account`);
 console.log(`🌌 ========================================================\n`);

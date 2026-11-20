@@ -9,7 +9,7 @@ import { CentauryEventBus, type SseEvent } from '../src/event-bus';
 import { formatSseEvent, createSseResponse } from '../src/sse-handler';
 import { ssePlugin } from '../src/sse-plugin';
 import { CentaurySSEClient } from '../src/client';
-import { CentauryServer, CentauryContext } from '@rudyrustam/core';
+import { CENTAURY_VERSION, CentauryServer, CentauryContext } from '@rudyrustam/core';
 
 // ─── EventBus ────────────────────────────────────────────────────────────────
 
@@ -200,7 +200,7 @@ describe('ssePlugin integration', () => {
     const res = await app.router.handle(ctx);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/event-stream');
-    expect(res.headers.get('x-centaury-sse')).toBe('1.0.0-alpha');
+    expect(res.headers.get('x-centaury-sse')).toBe(CENTAURY_VERSION);
     res.body?.cancel(); // Release the locked stream
   });
 

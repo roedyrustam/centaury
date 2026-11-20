@@ -42,21 +42,41 @@ export class EphemeralStreamParser {
   }
 
   private processBuffer(): void {
-    // If buffer ends with an unclosed tag (< without >), defer parsing the incomplete fragment
-    const lastOpen = this.buffer.lastIndexOf('<');
-    const lastClose = this.buffer.lastIndexOf('>');
+    // Scan buffer tracking quote state so '<' or '>' inside quoted attributes never misaligns buffering
+    let inTag = false;
+    let tagStart = -1;
+    let quote: '"' | "'" | null = null;
+
+    for (let i = 0; i < this.buffer.length; i++) {
+      const ch = this.buffer[i];
+      if (!inTag) {
+        if (ch === '<') {
+          inTag = true;
+          tagStart = i;
+        }
+      } else if (quote !== null) {
+        if (ch === quote) {
+          quote = null;
+        }
+      } else if (ch === '"' || ch === "'") {
+        quote = ch;
+      } else if (ch === '>') {
+        inTag = false;
+        tagStart = -1;
+      }
+    }
+
     let parseable = this.buffer;
     let remainder = '';
-
-    if (lastOpen > lastClose) {
-      parseable = this.buffer.slice(0, lastOpen);
-      remainder = this.buffer.slice(lastOpen);
+    if (inTag && tagStart >= 0) {
+      parseable = this.buffer.slice(0, tagStart);
+      remainder = this.buffer.slice(tagStart);
     }
 
     if (!parseable) return;
 
-    // Regex for matching tags: <tag attr="val"...> or </tag> or <tag ... />
-    const tagRegex = /<(\/)?([a-zA-Z0-9\-_]+)([^>]*)(\/)?>|([^<]+)/g;
+    // Regex for matching tags allowing quoted '>' inside attribute values
+    const tagRegex = /<(\/)?([a-zA-Z0-9\-_]+)((?:[^>"']|"[^"]*"|'[^']*')*?)(\/)?>|([^<]+)/g;
     let match: RegExpExecArray | null;
     let lastIndex = 0;
 

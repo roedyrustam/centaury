@@ -3,6 +3,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0-alpha] - 2026-11-21
+
+### Added
+- **Frontier AI Gateway & Source-Aware Self-Healing (`@rudyrustam/agent`)**:
+  - Added `CentauryAIGateway` (`packages/agent/src/ai-gateway.ts`) supporting Gemini, OpenAI-compatible, and deterministic local mock providers with automatic fallback cascades, SHA-256 KV-cache prefix pinning, `CentauryPromptFirewall` pre-screening, Ephemeral UI chunk streaming (`synthesizeEphemeralUI`), and trigram/token L2-normalized local embeddings (`embed`).
+  - Added `mcpPlugin()` mounting HTTP JSON-RPC 2.0 `POST /mcp` & `GET /mcp/tools`.
+  - Upgraded `CentaurySelfHealer` with optional `workspaceRoot`-confined `sourceContext` snippet extraction around crash stack frames.
+- **Typed RPC Client, Zod-to-JSON Schema MCP Reflection & Confinement-Safe Static Server (`@rudyrustam/core`)**:
+  - Added `CENTAURY_VERSION` / `CENTAURY_ENGINE_LABEL` single source of truth (`packages/core/src/version.ts`).
+  - Added `createRpcClient()` (`call()` + `batch()`), `zodToJsonSchema()` in `/.well-known/mcp.json`, HTTP `.put()`/`.delete()`/`.patch()`/`.all()` server shortcuts, `onWebSocketMessage()` hook, and path-traversal-safe `serveStatic()`.
+- **Durable SQLite A2A Tasks, SSE Task Streaming & Parallel Workflow Saga (`@rudyrustam/workflow`)**:
+  - Added optional SQLite `_centaury_a2a_tasks` persistence, `listTasks()`, `subscribe()`, `GET /a2a/tasks`, and `GET /a2a/tasks/:id/events` SSE streaming to `CentauryAIGateway`/`CentauryA2AServer`.
+  - Added `.parallel(groupName, branches)` concurrent fan-out checkpoints and `getRunHistory()` to `CentauryWorkflowEngine` with reverse Saga compensation over both sibling branches and prior sequential steps.
+- **CLI v1.2, Umbrella Re-Exports & Showcase App v3**:
+  - Added `centaury inspect [url]` command, fixed `agentic` template wiring (`mcpPlugin` + `a2aPlugin` + `selfHealingPlugin` + `legalCompliancePlugin`), integrated `legalCompliancePlugin` into `fullstack` template, and expanded `scripts/e2e-release-test.ts` to test both `fullstack` and `agentic` end-to-end.
+  - Normalized `bin/centaury.js` paths across `@rudyrustam/cli` and `@rudyrustam/centaury` and re-exported `@rudyrustam/ephemeral`, `@rudyrustam/astra`, and `@rudyrustam/agent` in umbrella `@rudyrustam/centaury`.
+
+### Security & Bug Fixes
+- Fixed `CentauryRouter` parametric backtracking parameter leak and wrapped global middleware around 404/OPTIONS dispatches.
+- Removed `'unsafe-eval'` from `securityHeadersPlugin` default CSP and added bounded `maxEntries` eviction to `rateLimiterPlugin`.
+- Fixed `effect()`/`computed()` dynamic branch dependency cleanup, disposal leaks, and Devtools HUD XSS escaping in `@rudyrustam/signals`.
+- Hardened `@rudyrustam/ephemeral` against whitespace-obfuscated `javascript:` URIs, unsafe inline `style` rules, and quoted `>` inside streamed attributes; added Shadow DOM attribute rendering to `<ui-header>` and `<ui-metric>`.
+- Added strict identifier/projection validation to `CentauryQueryBuilder`, true `BEGIN IMMEDIATE` / `COMMIT` / `ROLLBACK` async transaction safety to `CentauryMigrationRunner`, and `deleteByCollection()` cleanup to `CentauryVectorStore` + `CentauryAgentMemory.clearSession()`.
+- Enforced `alg === 'HS256'` header verification in `@rudyrustam/auth`, Passkey `expectedOrigins` + TTL challenge pruning, and HTML escaping in `legalCompliancePlugin`.
+
 ## [1.0.0-alpha] - 2026-10-07
 
 ### Added

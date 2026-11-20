@@ -37,7 +37,8 @@ centaury dev
 * `centaury create <name> [--template minimal|fullstack|agentic] [--install]` : Membuat proyek baru secara otomatis.
 * `centaury dev` : Menjalankan server lokal dengan mode auto-reload file watcher.
 * `centaury doctor` : Audit kesehatan runtime Bun, platform OS, batas memory RSS, dan status endpoint MCP.
-* `centaury --version` / `-v` : Menampilkan versi Centaury CLI.
+* `centaury inspect [url]` : Menginspeksi endpoint live `/_health`, `/.well-known/mcp.json`, `/.well-known/agent.json`, dan `/_heal/diagnostics`.
+* `centaury --version` / `-v` : Menampilkan versi Centaury CLI (`1.2.0-alpha`).
 
 Struktur direktori proyek yang dihasilkan:
 ```

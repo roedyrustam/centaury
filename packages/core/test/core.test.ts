@@ -4,6 +4,10 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
+import { mkdtempSync, writeFileSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { CENTAURY_ENGINE_LABEL, createRpcClient } from '../src/index';
 import { CentauryServer } from '../src/server';
 import { securityHeadersPlugin, rateLimiterPlugin } from '../src/plugins';
 import { z } from 'zod';
@@ -103,7 +107,11 @@ describe('@centaury/core Micro-Kernel Engine', () => {
     expect(mcp.mcpVersion).toBe('1.0.0');
     expect(mcp.serverInfo.name).toBe('Centaury Dual-Citizen Engine');
     expect(Array.isArray(mcp.tools)).toBe(true);
-    expect(mcp.tools.some((t: any) => t.name === 'math.calculate')).toBe(true);
+    const calcTool = mcp.tools.find((t: any) => t.name === 'math.calculate');
+    expect(calcTool).toBeDefined();
+    expect(calcTool.inputSchema.type).toBe('object');
+    expect(calcTool.inputSchema.properties.a.type).toBe('number');
+    expect(calcTool.inputSchema.required).toEqual(['a', 'b', 'op']);
   });
 
   it('upgrades WebSocket connection for real-time live bus', async () => {
@@ -116,11 +124,11 @@ describe('@centaury/core Micro-Kernel Engine', () => {
 
     const firstMsg: any = await messagePromise;
     expect(firstMsg.type).toBe('system.connect');
-    expect(firstMsg.engine).toBe('Centaury 1.0.0-alpha');
+    expect(firstMsg.engine).toBe(CENTAURY_ENGINE_LABEL);
     ws.close();
   });
 
-  it('installs custom plugins and applies security headers plugin', async () => {
+  it('installs custom plugins and applies security headers without unsafe-eval (including 404)', async () => {
     const pluginServer = new CentauryServer({ port: 0 });
     let installed = false;
 
@@ -142,9 +150,87 @@ describe('@centaury/core Micro-Kernel Engine', () => {
       expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
       expect(res.headers.get('X-Frame-Options')).toBe('DENY');
       expect(res.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
-      expect(res.headers.get('Content-Security-Policy')).toBeDefined();
+      const csp = res.headers.get('Content-Security-Policy') || '';
+      expect(csp.includes("'unsafe-eval'")).toBe(false);
+
+      const res404 = await fetch(`http://localhost:${pluginServer.port}/missing-page`);
+      expect(res404.status).toBe(404);
+      expect(res404.headers.get('X-Frame-Options')).toBe('DENY');
     } finally {
       pluginServer.stop();
+    }
+  });
+
+  it('prevents router param leakage on backtrack, supports PUT/DELETE, createRpcClient, WS hooks & safe serveStatic', async () => {
+    const tmpDir = mkdtempSync(join(tmpdir(), 'centaury-static-'));
+    writeFileSync(join(tmpDir, 'hello.txt'), 'Centaury Static OK');
+
+    const s = new CentauryServer({ port: 0 });
+    let leakedParamSeen: unknown = 'unset';
+    s.get('/items/:id/details', (ctx) => ctx.jsonResponse({ id: ctx.params.id }));
+    s.get('/items/*', (ctx) => {
+      leakedParamSeen = ctx.params.id;
+      return ctx.jsonResponse({ wildcard: ctx.params['*'], idParam: ctx.params.id ?? null });
+    });
+    s.put('/resource', (ctx) => ctx.jsonResponse({ method: 'PUT' }));
+    s.delete('/resource', (ctx) => ctx.jsonResponse({ method: 'DELETE' }));
+    s.rpc('echo', {
+      inputSchema: z.object({ msg: z.string() }),
+      handler: ({ input }) => ({ echoed: input.msg }),
+    });
+    s.serveStatic('/assets', tmpDir);
+
+    let customWsMsg = '';
+    s.onWebSocketMessage((ws, parsed) => {
+      if (parsed?.type === 'custom.ping') {
+        customWsMsg = String(parsed.payload ?? '');
+        ws.send(JSON.stringify({ type: 'custom.pong', payload: customWsMsg }));
+      }
+    });
+
+    const listener = s.listen();
+    try {
+      const backtrackRes = await fetch(`http://localhost:${listener.port}/items/secret-id/other`);
+      expect(backtrackRes.status).toBe(200);
+      const btJson: any = await backtrackRes.json();
+      expect(btJson.idParam).toBeNull();
+      expect(leakedParamSeen).toBeUndefined();
+
+      const putRes = await fetch(`http://localhost:${listener.port}/resource`, { method: 'PUT' });
+      expect((await putRes.json() as any).method).toBe('PUT');
+      const delRes = await fetch(`http://localhost:${listener.port}/resource`, { method: 'DELETE' });
+      expect((await delRes.json() as any).method).toBe('DELETE');
+
+      const staticOk = await fetch(`http://localhost:${listener.port}/assets/hello.txt`);
+      expect(staticOk.status).toBe(200);
+      expect(await staticOk.text()).toBe('Centaury Static OK');
+
+      const traversalRes = await fetch(`http://localhost:${listener.port}/assets/..%5cpackage.json`);
+      expect(traversalRes.status).toBe(403);
+
+      const client = createRpcClient({ baseUrl: `http://localhost:${listener.port}` });
+      const single = await client.call<{ echoed: string }>('echo', { msg: 'v1.2' });
+      expect(single.echoed).toBe('v1.2');
+      const batched = await client.batch([{ procedure: 'echo', input: { msg: 'b1' } }]);
+      expect(batched[0].success).toBe(true);
+      expect((batched[0].data as any).echoed).toBe('b1');
+
+      const ws = new WebSocket(`ws://localhost:${listener.port}/api/live`);
+      const pongPromise = new Promise<string>((resolve) => {
+        ws.onmessage = (ev) => {
+          const msg = JSON.parse(ev.data as string);
+          if (msg.type === 'system.connect') {
+            ws.send(JSON.stringify({ type: 'custom.ping', payload: 'hello-ws' }));
+          } else if (msg.type === 'custom.pong') {
+            resolve(msg.payload);
+          }
+        };
+      });
+      expect(await pongPromise).toBe('hello-ws');
+      ws.close();
+    } finally {
+      s.stop();
+      rmSync(tmpDir, { recursive: true, force: true });
     }
   });
 

@@ -3,11 +3,19 @@
  * @description Zero-Hydration Atomic Micro-Signals (<1.5KB) for Centaury
  */
 
-type Subscriber = () => void;
+type Subscriber = (() => void) & { deps?: Set<Set<Subscriber>> };
 
 let activeSubscriber: Subscriber | null = null;
 let isBatching = false;
 const pendingEffects = new Set<Subscriber>();
+
+function cleanupDeps(sub: Subscriber): void {
+  if (!sub.deps) return;
+  for (const depSet of sub.deps) {
+    depSet.delete(sub);
+  }
+  sub.deps.clear();
+}
 
 export interface ReadonlySignal<T> {
   readonly value: T;
@@ -26,6 +34,10 @@ export class Signal<T> implements ReadonlySignal<T> {
   public get value(): T {
     if (activeSubscriber) {
       this.subscribers.add(activeSubscriber);
+      if (!activeSubscriber.deps) {
+        activeSubscriber.deps = new Set();
+      }
+      activeSubscriber.deps.add(this.subscribers);
     }
     return this._value;
   }
@@ -59,7 +71,7 @@ export class Signal<T> implements ReadonlySignal<T> {
   }
 
   private notify(): void {
-    for (const sub of this.subscribers) {
+    for (const sub of Array.from(this.subscribers)) {
       if (isBatching) {
         pendingEffects.add(sub);
       } else {
@@ -111,8 +123,11 @@ export function computed<T>(fn: () => T, debugName?: string): ReadonlySignal<T> 
  */
 export function effect(fn: () => void | (() => void)): () => void {
   let cleanup: void | (() => void);
+  let disposed = false;
 
   const runner: Subscriber = () => {
+    if (disposed) return;
+    cleanupDeps(runner);
     if (cleanup && typeof cleanup === 'function') {
       cleanup();
     }
@@ -128,6 +143,9 @@ export function effect(fn: () => void | (() => void)): () => void {
   runner();
 
   return () => {
+    if (disposed) return;
+    disposed = true;
+    cleanupDeps(runner);
     if (cleanup && typeof cleanup === 'function') {
       cleanup();
     }

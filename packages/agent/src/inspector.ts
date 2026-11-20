@@ -3,7 +3,7 @@
  * @description Live AST & Schema Reflector for Centaury Dual-Citizen Agent Engine
  */
 
-import type { CentauryServer } from '@rudyrustam/core';
+import { CENTAURY_ENGINE_LABEL, type CentauryServer } from '@rudyrustam/core';
 
 export interface RouteMetadata {
   method: string;
@@ -75,7 +75,7 @@ export class CentauryInspector {
   public getSystemSnapshot(server: CentauryServer): SystemSnapshot {
     const mem = process.memoryUsage();
     return {
-      engine: 'Centaury 1.0.0-alpha',
+      engine: CENTAURY_ENGINE_LABEL,
       runtime: `Bun ${Bun.version}`,
       uptime: process.uptime(),
       memoryUsage: {

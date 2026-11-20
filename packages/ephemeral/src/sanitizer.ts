@@ -55,14 +55,21 @@ export class EphemeralSanitizer {
     // 3. Verify against allowed attributes
     if (!ALLOWED_ATTRS.has(lowerName)) return false;
 
-    // 4. Check for dangerous URI schemes in href / src
+    // 4. Check for dangerous URI schemes in href / src (stripping control/whitespace obfuscation)
     if (lowerName === 'href' || lowerName === 'src') {
-      const lowerVal = attrValue.trim().toLowerCase();
+      const normalized = attrValue.replace(/[\u0000-\u0020]+/g, '').toLowerCase();
       if (
-        lowerVal.startsWith('javascript:') ||
-        lowerVal.startsWith('vbscript:') ||
-        lowerVal.startsWith('data:text/html')
+        normalized.startsWith('javascript:') ||
+        normalized.startsWith('vbscript:') ||
+        normalized.startsWith('data:text/html')
       ) {
+        return false;
+      }
+    }
+
+    // 5. Block legacy/injection CSS constructs inside inline style attributes
+    if (lowerName === 'style') {
+      if (/expression\s*\(|javascript:|vbscript:|@import|-moz-binding|behavior\s*:/i.test(attrValue)) {
         return false;
       }
     }

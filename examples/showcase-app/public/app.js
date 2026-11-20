@@ -248,7 +248,72 @@ document.addEventListener('DOMContentLoaded', () => {
     log(`[SQLite Stats] ${JSON.stringify(data.data)}`, 'success');
   });
 
-  // 7. Ambient VAD Meter Animation (Simulating Audio Sensor Loop)
+  // 7. Prompt Firewall, MCP JSON-RPC & Self-Healer Handlers
+  const inputAuditPrompt = document.getElementById('input-audit-prompt');
+  const securityOutputEl = document.getElementById('security-output');
+
+  document.getElementById('btn-audit-prompt')?.addEventListener('click', async () => {
+    const prompt = inputAuditPrompt?.value || 'Hello Centaury';
+    log(`Auditing prompt via CentauryPromptFirewall...`, 'agent');
+    const res = await fetch('/rpc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ procedure: 'agent.auditPrompt', input: { prompt } }),
+    });
+    const json = await res.json();
+    if (securityOutputEl) securityOutputEl.textContent = JSON.stringify(json.data, null, 2);
+    log(`[Firewall] allowed=${json.data?.allowed} riskScore=${json.data?.riskScore}`, json.data?.allowed ? 'success' : 'event');
+  });
+
+  document.getElementById('btn-mcp-tools')?.addEventListener('click', async () => {
+    log('Calling POST /mcp (method: tools/list)...', 'agent');
+    const res = await fetch('/mcp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 'ui-mcp-1', method: 'tools/list' }),
+    });
+    const json = await res.json();
+    if (securityOutputEl) securityOutputEl.textContent = JSON.stringify(json.result, null, 2);
+    log(`[MCP POST] ${(json.result?.tools || []).length} tools active`, 'success');
+  });
+
+  document.getElementById('btn-heal-diagnostics')?.addEventListener('click', async () => {
+    log('Fetching /_heal/diagnostics...', 'event');
+    const res = await fetch('/_heal/diagnostics');
+    const json = await res.json();
+    if (securityOutputEl) securityOutputEl.textContent = JSON.stringify(json, null, 2);
+  });
+
+  // 8. A2A Swarm & Durable Workflow Saga Handlers
+  const workflowOutputEl = document.getElementById('workflow-output');
+
+  document.getElementById('btn-run-workflow')?.addEventListener('click', async () => {
+    log('Executing durable parallel Saga workflow (workflow.runDemo)...', 'agent');
+    const res = await fetch('/rpc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ procedure: 'workflow.runDemo', input: { task: 'showcase-verification' } }),
+    });
+    const json = await res.json();
+    if (workflowOutputEl) workflowOutputEl.textContent = JSON.stringify(json.data, null, 2);
+    log(`[Workflow] status=${json.data?.status} steps=${(json.data?.completedSteps || []).length}`, 'success');
+  });
+
+  document.getElementById('btn-agent-card')?.addEventListener('click', async () => {
+    log('Fetching /.well-known/agent.json...', 'agent');
+    const res = await fetch('/.well-known/agent.json');
+    const json = await res.json();
+    if (workflowOutputEl) workflowOutputEl.textContent = JSON.stringify(json, null, 2);
+  });
+
+  document.getElementById('btn-a2a-tasks')?.addEventListener('click', async () => {
+    log('Fetching /a2a/tasks...', 'event');
+    const res = await fetch('/a2a/tasks');
+    const json = await res.json();
+    if (workflowOutputEl) workflowOutputEl.textContent = JSON.stringify(json, null, 2);
+  });
+
+  // 9. Ambient VAD Meter Animation (Simulating Audio Sensor Loop)
   setInterval(() => {
     const currentText = vadEnergyReading.textContent || '';
     if (!currentText.includes('SPEECH')) {

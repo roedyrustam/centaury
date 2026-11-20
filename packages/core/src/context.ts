@@ -3,6 +3,8 @@
  * @description Request context and deterministic KV-cache prefix state for Centaury Framework
  */
 
+import { CENTAURY_VERSION } from './version';
+
 export interface CentauryContextInit {
   req: Request;
   params?: Record<string, string>;
@@ -62,7 +64,7 @@ export class CentauryContext {
       status,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'X-Centaury-Engine': '1.0.0-alpha',
+        'X-Centaury-Engine': CENTAURY_VERSION,
         ...headers,
       },
     });

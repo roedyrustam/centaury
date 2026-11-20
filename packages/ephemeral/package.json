@@ -1,6 +1,6 @@
 {
   "name": "@rudyrustam/ephemeral",
-  "version": "1.1.0-alpha",
+  "version": "1.2.0-alpha",
   "description": "Zero-Eval Ephemeral Generative UI Synthesizer & Token Streamer for Centaury",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

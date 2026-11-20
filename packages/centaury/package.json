@@ -1,12 +1,12 @@
 {
   "name": "@rudyrustam/centaury",
-  "version": "1.1.0-alpha",
+  "version": "1.2.0-alpha",
   "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "centaury": "./bin/centaury.js"
+    "centaury": "bin/centaury.js"
   },
   "type": "module",
   "exports": {
@@ -25,6 +25,9 @@
     "@rudyrustam/cli": "workspace:*",
     "@rudyrustam/core": "workspace:*",
     "@rudyrustam/signals": "workspace:*",
+    "@rudyrustam/ephemeral": "workspace:*",
+    "@rudyrustam/astra": "workspace:*",
+    "@rudyrustam/agent": "workspace:*",
     "@rudyrustam/sse": "workspace:*",
     "@rudyrustam/db": "workspace:*",
     "@rudyrustam/auth": "workspace:*",

@@ -71,6 +71,15 @@ describe('@rudyrustam/workflow A2A Protocol & Durable Saga Engine', () => {
       expect(getRes.status).toBe(200);
       expect(((await getRes.json()) as any).id).toBe('task-a2a-1');
 
+      const listRes = await fetch(`http://localhost:${listener.port}/a2a/tasks`);
+      expect(listRes.status).toBe(200);
+      const listJson: any = await listRes.json();
+      expect(listJson.count).toBeGreaterThanOrEqual(1);
+
+      const eventsRes = await fetch(`http://localhost:${listener.port}/a2a/tasks/task-a2a-1/events`);
+      expect(eventsRes.status).toBe(200);
+      expect(await eventsRes.text()).toContain('task-a2a-1');
+
       // Direct unit check on canceling a working task
       let resolvePending!: () => void;
       const pendingPromise = new Promise<void>((r) => {
@@ -171,6 +180,60 @@ describe('@rudyrustam/workflow A2A Protocol & Durable Saga Engine', () => {
       expect(failedRun.error).toContain('Downstream bank rejected settlement');
       expect(failedRun.compensatedSteps).toEqual(['allocate_gpu', 'lock_funds']);
       expect(rollbackLog).toEqual(['release_gpu', 'unlock_funds']);
+
+      // 3. Verify SQLite-backed A2A persistence across server instances + Parallel workflow Saga compensation
+      const persistentA2A1 = new CentauryA2AServer({
+        name: 'Persistent A2A',
+        description: 'DB-backed agent',
+        db,
+        skills: [{ id: 'ping', name: 'Ping', description: 'Ping skill', handler: () => ({ ok: true }) }],
+      });
+      await persistentA2A1.sendTask({ id: 'task-db-1', skillId: 'ping' });
+
+      const persistentA2A2 = new CentauryA2AServer({
+        name: 'Persistent A2A Reloaded',
+        description: 'Reads from shared SQLite',
+        db,
+      });
+      expect(persistentA2A2.getTask('task-db-1')?.status).toBe('completed');
+
+      const parallelLog: string[] = [];
+      const parallelFlow = engine
+        .createWorkflow<{ docs?: string; sec?: string; failing?: boolean }>('parallel-verify')
+        .step(
+          'prep',
+          (ctx) => ctx,
+          () => {
+            parallelLog.push('comp:prep');
+          }
+        )
+        .parallel('fanout', [
+          {
+            name: 'branch_docs',
+            execute: (ctx) => ({ ...ctx, docs: 'ok' }),
+            compensate: () => {
+              parallelLog.push('comp:branch_docs');
+            },
+          },
+          {
+            name: 'branch_sec',
+            execute: (ctx) => {
+              if (ctx.failing) throw new Error('Security branch aborted');
+              return { ...ctx, sec: 'ok' };
+            },
+          },
+        ]);
+
+      const parFail = await parallelFlow.run('run-par-fail', { failing: true });
+      expect(parFail.status).toBe('compensated');
+      expect(parFail.failedStep).toBe('fanout:branch_sec');
+      expect(parallelLog).toEqual(['comp:branch_docs', 'comp:prep']);
+
+      const parOk = await parallelFlow.run('run-par-ok', { failing: false });
+      expect(parOk.status).toBe('completed');
+      expect(parOk.context.docs).toBe('ok');
+      expect(parOk.context.sec).toBe('ok');
+      expect(engine.getRunHistory('run-par-ok').length).toBeGreaterThanOrEqual(3);
     } finally {
       db.close();
     }

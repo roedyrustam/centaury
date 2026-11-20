@@ -1,6 +1,6 @@
 # Centaury Framework — Development Roadmap & Phase Progression
 **Framework**: Centaury (`@rudyrustam/centaury` / `@rudyrustam/core`)  
-**Version**: `1.1.0-alpha`  
+**Version**: `1.2.0-alpha`  
 **Lifecycle Pipeline**: Autonomous Multi-Phase Protocol (`zero-to-prod-orchestrator`)  
 
 ---
@@ -13,7 +13,7 @@
 [Phase 13: @rudyrustam/workflow] <── [Phase 12: @rudyrustam/auth] <── [Phase 11: Self-Heal & Firewall] <── [Phase 9-10: SSE & DB]
          │
          v
-[Phase 14: 11-Package Branding Sync, Showcase v2 & E2E Hardening]
+[Phase 14: 11-Package Sync & Showcase v2] ──> [Phase 15-17: v1.2.0-alpha Deep Hardening, AI Gateway & Parallel Saga]
 ```
 
 ---
@@ -95,3 +95,8 @@
 - [x] Sinkronisasi nama paket `@rudyrustam/*` di seluruh 11 paket monorepo menuju `1.1.0-alpha`.
 - [x] Re-export `@rudyrustam/auth` dan `@rudyrustam/workflow` via umbrella `@rudyrustam/centaury`.
 - [x] Integrasi plugin firewall/self-heal/compliance/A2A + RPC workflow demo ke `examples/showcase-app/server.ts`.
+
+### 🧠 Phase 15–17: v1.2.0-alpha Deep Hardening, AI Gateway, Parallel Saga & DX Upgrade
+- [x] **Phase 15 (Security & Correctness Hardening)**: Router backtracking/middleware fix, `zodToJsonSchema` di `/.well-known/mcp.json`, `createRpcClient()`, confinement-safe `serveStatic()`, `effect()` dependency cleanup, XSS hardening pada `<c-devtools>`, `@rudyrustam/ephemeral`, & `legalCompliancePlugin`, validasi identifier SQL & async migration transactions pada `@rudyrustam/db`, serta `alg === 'HS256'` & WebAuthn origin/pruning checks pada `@rudyrustam/auth`.
+- [x] **Phase 16 (Autonomous AI & Durable Orchestration)**: `CentauryAIGateway` (Gemini/OpenAI-compatible/Mock + fallback cascade + KV-cache hash), `mcpPlugin(mcp)` HTTP JSON-RPC `/mcp`, source-aware `CentaurySelfHealer` snippet context, SQLite-backed A2A persistence & SSE `/a2a/tasks/:id/events`, dan `.parallel()` workflow Saga fan-out.
+- [x] **Phase 17 (CLI v1.2, Umbrella Sync & Showcase v3)**: `centaury inspect [url]`, template `agentic`/`fullstack` tersinkronisasi v1.2, normalisasi `bin` path bebas warning npm, umbrella `@rudyrustam/centaury` mencakup seluruh 10 modul library, Showcase App v3, dan E2E check ganda (`fullstack` + `agentic`).

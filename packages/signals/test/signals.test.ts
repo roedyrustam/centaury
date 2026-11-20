@@ -90,6 +90,40 @@ describe('@centaury/signals Atomic Reactive Engine', () => {
 
     expect(evaluations).toBe(2); // Only 1 additional evaluation instead of 3
   });
+
+  it('re-tracks conditional signal dependencies dynamically and stops completely on disposal', () => {
+    const flag = signal(true);
+    const branchA = signal('A1');
+    const branchB = signal('B1');
+    let runs = 0;
+    let observed = '';
+
+    const dispose = effect(() => {
+      runs++;
+      observed = flag.value ? branchA.value : branchB.value;
+    });
+
+    expect(runs).toBe(1);
+    expect(observed).toBe('A1');
+
+    // Switch branch -> branchA is no longer tracked
+    flag.value = false;
+    expect(runs).toBe(2);
+    expect(observed).toBe('B1');
+
+    branchA.value = 'A2';
+    expect(runs).toBe(2);
+
+    branchB.value = 'B2';
+    expect(runs).toBe(3);
+    expect(observed).toBe('B2');
+
+    // Dispose unlinks all subscriptions permanently
+    dispose();
+    flag.value = true;
+    branchB.value = 'B3';
+    expect(runs).toBe(3);
+  });
 });
 
 describe('@centaury/signals Zero-Hydration DOM Bindings', () => {
@@ -220,6 +254,7 @@ describe('@centaury/signals Zero-Hydration DOM Bindings', () => {
     registerCentauryElements(window.customElements as any);
 
     const testSig = signal(42, 'core_telemetry_rate');
+    signal('<img src=x onerror=alert(1)>', 'xss_probe_sig');
     const signals = getRegisteredSignals();
     expect(signals.has('core_telemetry_rate')).toBe(true);
     expect(signals.get('core_telemetry_rate')!.peek()).toBe(42);
@@ -234,6 +269,8 @@ describe('@centaury/signals Zero-Hydration DOM Bindings', () => {
     const panel = devtools.querySelector('.centaury-devtools-panel');
     expect(panel).not.toBeNull();
     expect(panel!.innerHTML).toContain('core_telemetry_rate');
+    expect(panel!.innerHTML).not.toContain('<img src=x');
+    expect(panel!.innerHTML).toContain('&lt;img');
 
     devtools.toggle();
     expect(devtools.isOpen).toBe(false);

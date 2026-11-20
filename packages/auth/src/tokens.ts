@@ -93,6 +93,12 @@ export async function verifyToken<T extends TokenClaims = TokenClaims>(
   const signingInput = `${headerPart}.${payloadPart}`;
 
   try {
+    const headerJson = textDecoder.decode(fromBase64Url(headerPart));
+    const header = JSON.parse(headerJson) as { alg?: string; typ?: string };
+    if (header?.alg !== 'HS256') {
+      return { valid: false, error: 'Unsupported token algorithm' };
+    }
+
     const key = await importHmacKey(secret);
     const expectedSig = new Uint8Array(
       await crypto.subtle.sign('HMAC', key, textEncoder.encode(signingInput))

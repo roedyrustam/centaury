@@ -13,7 +13,7 @@
     },
     "examples/showcase-app": {
       "name": "centaury-showcase-app",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "@rudyrustam/agent": "workspace:*",
         "@rudyrustam/astra": "workspace:*",
@@ -22,13 +22,14 @@
         "@rudyrustam/db": "workspace:*",
         "@rudyrustam/ephemeral": "workspace:*",
         "@rudyrustam/signals": "workspace:*",
+        "@rudyrustam/sse": "workspace:*",
         "@rudyrustam/workflow": "workspace:*",
         "zod": "^3.24.2",
       },
     },
     "packages/agent": {
       "name": "@rudyrustam/agent",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
         "@rudyrustam/db": "workspace:*",
@@ -36,7 +37,7 @@
     },
     "packages/astra": {
       "name": "@rudyrustam/astra",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
       },
@@ -46,7 +47,7 @@
     },
     "packages/auth": {
       "name": "@rudyrustam/auth",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
       },
@@ -56,15 +57,18 @@
     },
     "packages/centaury": {
       "name": "@rudyrustam/centaury",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "bin": {
-        "centaury": "./bin/centaury.js",
+        "centaury": "bin/centaury.js",
       },
       "dependencies": {
+        "@rudyrustam/agent": "workspace:*",
+        "@rudyrustam/astra": "workspace:*",
         "@rudyrustam/auth": "workspace:*",
         "@rudyrustam/cli": "workspace:*",
         "@rudyrustam/core": "workspace:*",
         "@rudyrustam/db": "workspace:*",
+        "@rudyrustam/ephemeral": "workspace:*",
         "@rudyrustam/signals": "workspace:*",
         "@rudyrustam/sse": "workspace:*",
         "@rudyrustam/workflow": "workspace:*",
@@ -72,9 +76,9 @@
     },
     "packages/cli": {
       "name": "@rudyrustam/cli",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "bin": {
-        "centaury": "./bin/centaury.js",
+        "centaury": "bin/centaury.js",
       },
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
@@ -82,7 +86,7 @@
     },
     "packages/core": {
       "name": "@rudyrustam/core",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "zod": "^3.24.2",
       },
@@ -92,14 +96,14 @@
     },
     "packages/db": {
       "name": "@rudyrustam/db",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "peerDependencies": {
         "typescript": "^5.8.0",
       },
     },
     "packages/ephemeral": {
       "name": "@rudyrustam/ephemeral",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "@rudyrustam/signals": "workspace:*",
       },
@@ -109,14 +113,14 @@
     },
     "packages/signals": {
       "name": "@rudyrustam/signals",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "devDependencies": {
         "happy-dom": "^17.1.8",
       },
     },
     "packages/sse": {
       "name": "@rudyrustam/sse",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
       },
@@ -126,7 +130,7 @@
     },
     "packages/workflow": {
       "name": "@rudyrustam/workflow",
-      "version": "1.1.0-alpha",
+      "version": "1.2.0-alpha",
       "dependencies": {
         "@rudyrustam/core": "workspace:*",
         "@rudyrustam/db": "workspace:*",

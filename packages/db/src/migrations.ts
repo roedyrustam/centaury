@@ -17,6 +17,8 @@ export interface MigrationRecord {
   applied_at: number;
 }
 
+const SAFE_TABLE_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
 export class CentauryMigrationRunner {
   private db: CentauryDatabase;
   private migrations: Migration[] = [];
@@ -24,7 +26,12 @@ export class CentauryMigrationRunner {
 
   constructor(db: CentauryDatabase, tableName?: string) {
     this.db = db;
-    if (tableName) this.tableName = tableName;
+    if (tableName) {
+      if (!SAFE_TABLE_REGEX.test(tableName)) {
+        throw new Error(`MigrationRunner: unsafe table name '${tableName}'`);
+      }
+      this.tableName = tableName;
+    }
     this.ensureMigrationTable();
   }
 
@@ -71,13 +78,22 @@ export class CentauryMigrationRunner {
 
     for (const migration of this.migrations) {
       if (!applied.has(migration.name)) {
-        await this.db.transaction(async () => {
+        this.db.exec('BEGIN IMMEDIATE;');
+        try {
           await migration.up(this.db);
           const stmt = this.db.prepare(
             `INSERT INTO ${this.tableName} (name, applied_at) VALUES (?, ?);`
           );
           stmt.run(migration.name, Date.now());
-        });
+          this.db.exec('COMMIT;');
+        } catch (err) {
+          try {
+            this.db.exec('ROLLBACK;');
+          } catch {
+            // ignore rollback error
+          }
+          throw err;
+        }
         newlyApplied.push(migration.name);
       }
     }
@@ -103,11 +119,20 @@ export class CentauryMigrationRunner {
       throw new Error(`Cannot rollback '${last.name}': down migration not implemented.`);
     }
 
-    await this.db.transaction(async () => {
-      await migration.down!(this.db);
+    this.db.exec('BEGIN IMMEDIATE;');
+    try {
+      await migration.down(this.db);
       const stmt = this.db.prepare(`DELETE FROM ${this.tableName} WHERE name = ?;`);
       stmt.run(last.name);
-    });
+      this.db.exec('COMMIT;');
+    } catch (err) {
+      try {
+        this.db.exec('ROLLBACK;');
+      } catch {
+        // ignore rollback error
+      }
+      throw err;
+    }
 
     return last.name;
   }

@@ -145,6 +145,13 @@ describe('@rudyrustam/db QueryBuilder', () => {
     const remaining = query(db).select('COUNT(*) as total').from('products').get<{ total: number }>();
     expect(remaining?.total).toBe(2);
   });
+
+  it('rejects unsafe SQL identifiers and projections in QueryBuilder', () => {
+    expect(() => query(db).select('*').from('products; DROP TABLE products').toSql()).toThrow();
+    expect(() => query(db).select('name FROM sqlite_master --').from('products').toSql()).toThrow();
+    expect(() => query(db).insertInto('products', { 'bad col;': 1 }).toSql()).toThrow();
+    expect(() => query(db).select('COUNT(*) as total').from('products').orderBy('price; --', 'DESC').toSql()).toThrow();
+  });
 });
 
 describe('@rudyrustam/db Migration Runner', () => {
@@ -202,6 +209,23 @@ describe('@rudyrustam/db Migration Runner', () => {
     expect(rolledBack).toBe('002_add_author_to_posts');
     expect(runner.status().applied).toBe(1);
     expect(runner.status().pending).toBe(1);
+  });
+
+  it('rolls back an async migration atomically if up() rejects midway', async () => {
+    const runner = new CentauryMigrationRunner(db);
+    runner.register({
+      name: '001_atomic_fail',
+      up: async (d) => {
+        d.exec('CREATE TABLE temp_atomic (id INTEGER PRIMARY KEY);');
+        await Bun.sleep(5);
+        throw new Error('Async migration failure');
+      },
+    });
+
+    await expect(runner.migrate()).rejects.toThrow('Async migration failure');
+    expect(runner.status().applied).toBe(0);
+    const tbl = db.prepare<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table' AND name='temp_atomic';").get();
+    expect(tbl).toBeNull();
   });
 });
 
@@ -283,6 +307,10 @@ describe('@rudyrustam/db Vector Engine & Vector Store', () => {
     const deleted = store.delete('doc-cooking');
     expect(deleted).toBe(true);
     expect(store.count('docs')).toBe(2);
+
+    const purged = store.deleteByCollection('docs');
+    expect(purged).toBe(2);
+    expect(store.count('docs')).toBe(0);
   });
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "@rudyrustam/workflow",
-  "version": "1.1.0-alpha",
+  "version": "1.2.0-alpha",
   "description": "A2A Agent-to-Agent Protocol Server & SQLite-backed Durable Saga Workflow Engine for Centaury Framework",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

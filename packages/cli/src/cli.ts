@@ -3,6 +3,7 @@
  * @description Main command-line interface logic for Centaury Framework
  */
 
+import { CENTAURY_VERSION } from '@rudyrustam/core';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
@@ -19,7 +20,7 @@ export async function runCLI(args: string[]): Promise<number> {
   switch (command) {
     case '--version':
     case '-v':
-      console.log('🌌 Centaury CLI version: 1.0.0-alpha');
+      console.log(`🌌 Centaury CLI version: ${CENTAURY_VERSION}`);
       return 0;
 
     case '--help':
@@ -29,6 +30,11 @@ export async function runCLI(args: string[]): Promise<number> {
 
     case 'doctor':
       return runDoctor();
+
+    case 'inspect': {
+      const targetArg = args[1] && !args[1].startsWith('-') ? args[1] : 'http://localhost:3000';
+      return await inspectServer(targetArg);
+    }
 
     case 'create': {
       const projectName = args[1];
@@ -48,7 +54,9 @@ export async function runCLI(args: string[]): Promise<number> {
             template = t;
             i++;
           } else {
-            console.error(`\x1b[31mError: Unknown template '${args[i + 1]}'. Choose from: minimal, fullstack, agentic\x1b[0m`);
+            console.error(
+              `\x1b[31mError: Unknown template '${args[i + 1]}'. Choose from: minimal, fullstack, agentic\x1b[0m`
+            );
             return 1;
           }
         } else if (args[i] === '--install' || args[i] === '-i') {
@@ -77,7 +85,7 @@ export async function runCLI(args: string[]): Promise<number> {
 
 function printHelp(): void {
   console.log(`
-\x1b[36m🌌 CENTAURY FRAMEWORK CLI\x1b[0m
+\x1b[36m🌌 CENTAURY FRAMEWORK CLI (v${CENTAURY_VERSION})\x1b[0m
 \x1b[90mThe Autonomous Fullstack Engine for Super-Intelligent Systems\x1b[0m
 
 \x1b[33mUSAGE:\x1b[0m
@@ -87,18 +95,19 @@ function printHelp(): void {
   \x1b[32mcreate <name> [flags]\x1b[0m   Scaffold a new Centaury application
   \x1b[32mdev\x1b[0m                     Start the local development server with auto-reload
   \x1b[32mdoctor\x1b[0m                  Audit local runtime health, Bun, and port availability
+  \x1b[32minspect [url]\x1b[0m           Introspect health, MCP v1.x, A2A Agent Card & Self-Healer diagnostics
   \x1b[32m--version, -v\x1b[0m           Show Centaury version
   \x1b[32m--help, -h\x1b[0m              Display this guide
 
 \x1b[33mCREATE FLAGS:\x1b[0m
   \x1b[36m--template <name>\x1b[0m       Template archetype:
                            • \x1b[32mminimal\x1b[0m   : Ultra-lightweight Micro-Signals + Bun Trie server (<1.5KB)
-                           • \x1b[32mfullstack\x1b[0m : RPC procedures + Reactive UI + Web Components (Default)
-                           • \x1b[32magentic\x1b[0m   : Dual-Citizen MCP v1.x + Ephemeral UI + Astra Multimodal
+                           • \x1b[32mfullstack\x1b[0m : RPC procedures + Reactive UI + Legal Compliance Trio (Default)
+                           • \x1b[32magentic\x1b[0m   : Dual-Citizen MCP v1.x + Self-Healer + A2A + Ephemeral UI
   \x1b[36m--install, -i\x1b[0m           Automatically run bun install after project scaffolding
 
 \x1b[33mDOCUMENTATION:\x1b[0m
-  https://centaury.dev/docs
+  https://github.com/roedyrustam/centaury
 `);
 }
 
@@ -122,38 +131,99 @@ function runDoctor(): number {
 
   // 4. Check AI Engine readiness
   console.log('  \x1b[32m✓\x1b[0m Frontier Model: Gemini 4 Pro / Project Astra Live API compatibility ready');
-  console.log('  \x1b[32m✓\x1b[0m Model Context Protocol: MCP v1.x endpoints ready\n');
+  console.log('  \x1b[32m✓\x1b[0m Model Context Protocol: MCP v1.x + A2A Discovery endpoints ready\n');
 
   console.log('\x1b[32m✨ Environment is fully healthy and ready for Centaury development!\x1b[0m\n');
   return 0;
 }
 
+async function fetchJsonSafe(url: string): Promise<{ ok: boolean; status: number; data?: Record<string, any> }> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return { ok: false, status: res.status };
+    const data = (await res.json()) as Record<string, any>;
+    return { ok: true, status: res.status, data };
+  } catch {
+    return { ok: false, status: 0 };
+  }
+}
+
+async function inspectServer(targetUrl: string): Promise<number> {
+  const baseUrl = targetUrl.replace(/\/+$/, '');
+  console.log(`\n🔭 Inspecting Centaury runtime at ${baseUrl}...\n`);
+
+  const [health, mcp, agentCard, diagnostics] = await Promise.all([
+    fetchJsonSafe(`${baseUrl}/_health`),
+    fetchJsonSafe(`${baseUrl}/.well-known/mcp.json`),
+    fetchJsonSafe(`${baseUrl}/.well-known/agent.json`),
+    fetchJsonSafe(`${baseUrl}/_heal/diagnostics`),
+  ]);
+
+  if (!health.ok || !health.data) {
+    console.error(`\x1b[31m✗ Unreachable: ${baseUrl}/_health (HTTP ${health.status || 'connection refused'})\x1b[0m`);
+    return 1;
+  }
+
+  console.log(`  \x1b[32m✓\x1b[0m Engine Health   : ${health.data.engine ?? 'Centaury'} (${health.data.runtime ?? 'Bun'})`);
+  console.log(`  \x1b[32m✓\x1b[0m Uptime / WS     : ${Math.round(Number(health.data.uptime ?? 0))}s uptime, ${health.data.activeConnections ?? 0} active WS`);
+
+  if (mcp.ok && mcp.data) {
+    const tools = Array.isArray(mcp.data.tools) ? mcp.data.tools.length : 0;
+    const routes = Array.isArray(mcp.data.routes) ? mcp.data.routes.length : 0;
+    console.log(`  \x1b[32m✓\x1b[0m MCP v1.x        : ${tools} tool(s), ${routes} route(s) exposed at /.well-known/mcp.json`);
+  } else {
+    console.log(`  \x1b[33m-\x1b[0m MCP v1.x        : Not enabled (HTTP ${mcp.status})`);
+  }
+
+  if (agentCard.ok && agentCard.data) {
+    const skills = Array.isArray(agentCard.data.skills) ? agentCard.data.skills.length : 0;
+    console.log(`  \x1b[32m✓\x1b[0m A2A Agent Card  : ${agentCard.data.name ?? 'Agent'} (${skills} skill(s))`);
+  } else {
+    console.log(`  \x1b[33m-\x1b[0m A2A Agent Card  : Not installed (HTTP ${agentCard.status})`);
+  }
+
+  if (diagnostics.ok && diagnostics.data) {
+    console.log(`  \x1b[32m✓\x1b[0m Self-Healer     : ${diagnostics.data.count ?? 0} captured diagnostic(s)`);
+  } else {
+    console.log(`  \x1b[33m-\x1b[0m Self-Healer     : Not installed (HTTP ${diagnostics.status})`);
+  }
+
+  console.log('');
+  return 0;
+}
+
 async function scaffoldProject(projectName: string, options: CreateOptions): Promise<number> {
   const targetDir = join(process.cwd(), projectName);
+  const verRange = `^${CENTAURY_VERSION}`;
 
   if (existsSync(targetDir)) {
     console.error(`\x1b[31mError: Directory '${projectName}' already exists.\x1b[0m`);
     return 1;
   }
 
-  console.log(`\n🌌 Scaffolding new Centaury [\x1b[35m${options.template.toUpperCase()}\x1b[0m] application into: \x1b[36m${targetDir}\x1b[0m...`);
+  console.log(
+    `\n🌌 Scaffolding new Centaury [\x1b[35m${options.template.toUpperCase()}\x1b[0m] application into: \x1b[36m${targetDir}\x1b[0m...`
+  );
 
   mkdirSync(join(targetDir, 'src'), { recursive: true });
   mkdirSync(join(targetDir, 'public'), { recursive: true });
 
   // 1. package.json
   const dependencies: Record<string, string> = {
-    '@rudyrustam/core': '^1.0.0-alpha',
-    '@rudyrustam/signals': '^1.0.0-alpha',
+    '@rudyrustam/core': verRange,
+    '@rudyrustam/signals': verRange,
     zod: '^3.24.2',
   };
 
   if (options.template === 'fullstack' || options.template === 'agentic') {
-    dependencies['@rudyrustam/ephemeral'] = '^1.0.0-alpha';
+    dependencies['@rudyrustam/ephemeral'] = verRange;
+    dependencies['@rudyrustam/auth'] = verRange;
   }
   if (options.template === 'agentic') {
-    dependencies['@rudyrustam/astra'] = '^1.0.0-alpha';
-    dependencies['@rudyrustam/agent'] = '^1.0.0-alpha';
+    dependencies['@rudyrustam/astra'] = verRange;
+    dependencies['@rudyrustam/agent'] = verRange;
+    dependencies['@rudyrustam/db'] = verRange;
+    dependencies['@rudyrustam/workflow'] = verRange;
   }
 
   const pkgJson = {
@@ -184,7 +254,10 @@ async function scaffoldProject(projectName: string, options: CreateOptions): Pro
 
   // 3. src/server.ts
   let serverCode = '';
+  let defaultRpcProc = 'ping';
+
   if (options.template === 'minimal') {
+    defaultRpcProc = 'ping';
     serverCode = `import { CentauryServer } from '@rudyrustam/core';
 import { join } from 'path';
 
@@ -196,6 +269,7 @@ app.get('/', async () => {
 });
 
 app.rpc('ping', {
+  description: 'Simple health ping RPC procedure',
   handler: () => ({ pong: true, time: new Date().toISOString() }),
 });
 
@@ -203,8 +277,11 @@ app.listen();
 console.log('🌌 Centaury minimal server running at http://localhost:3000');
 `;
   } else if (options.template === 'agentic') {
+    defaultRpcProc = 'analyzeAgentState';
     serverCode = `import { CentauryServer } from '@rudyrustam/core';
-import { CentauryMCPServer } from '@rudyrustam/agent';
+import { CentauryMCPServer, mcpPlugin, selfHealingPlugin } from '@rudyrustam/agent';
+import { legalCompliancePlugin } from '@rudyrustam/auth';
+import { a2aPlugin } from '@rudyrustam/workflow';
 import { z } from 'zod';
 import { join } from 'path';
 
@@ -217,24 +294,36 @@ const app = new CentauryServer({
 });
 
 const mcp = new CentauryMCPServer(app);
+app.usePlugin(selfHealingPlugin());
+app.usePlugin(mcpPlugin(mcp, { path: '/mcp' }));
+app.usePlugin(legalCompliancePlugin({ appName: '${projectName}' }));
+app.usePlugin(
+  a2aPlugin({
+    name: '${projectName} Agent',
+    description: 'Autonomous Dual-Citizen Centaury Agent',
+    skills: [
+      {
+        id: 'inspect_state',
+        name: 'Inspect System State',
+        description: 'Audits current query safety via CentauryPromptFirewall',
+        handler: (input) => mcp.firewall.inspectPrompt(String((input as { query?: string })?.query ?? '')),
+      },
+    ],
+  })
+);
 
 app.get('/', async () => {
   const file = Bun.file(join(import.meta.dir, '../public/index.html'));
   return new Response(file, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 });
 
-// Dual-Citizen MCP Endpoint
-app.post('/mcp', async (req) => {
-  const body = await req.json();
-  const res = await mcp.handleRequest(body);
-  return Response.json(res);
-});
-
 app.rpc('analyzeAgentState', {
-  input: z.object({ query: z.string() }),
-  handler: (input) => ({
+  description: 'Audit and evaluate agent state query',
+  inputSchema: z.object({ query: z.string() }),
+  handler: ({ input }) => ({
     status: 'optimal',
     query: input.query,
+    firewall: mcp.firewall.inspectPrompt(input.query),
     timestamp: Date.now(),
   }),
 });
@@ -245,8 +334,9 @@ console.log('🤖 MCP Endpoint active at http://localhost:3000/mcp');
 `;
   } else {
     // fullstack default
+    defaultRpcProc = 'systemMetrics';
     serverCode = `import { CentauryServer } from '@rudyrustam/core';
-import { z } from 'zod';
+import { legalCompliancePlugin } from '@rudyrustam/auth';
 import { join } from 'path';
 
 const app = new CentauryServer({
@@ -257,12 +347,15 @@ const app = new CentauryServer({
   },
 });
 
+app.usePlugin(legalCompliancePlugin({ appName: '${projectName}' }));
+
 app.get('/', async () => {
   const file = Bun.file(join(import.meta.dir, '../public/index.html'));
   return new Response(file, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 });
 
 app.rpc('systemMetrics', {
+  description: 'Retrieve live server metrics',
   handler: () => ({
     status: 'healthy',
     uptime: process.uptime(),
@@ -277,6 +370,8 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
   }
   writeFileSync(join(targetDir, 'src/server.ts'), serverCode);
 
+  const defaultRpcInput = options.template === 'agentic' ? { query: 'health-check' } : undefined;
+
   // 4. public/index.html
   const htmlCode = `<!DOCTYPE html>
 <html lang="id">
@@ -287,16 +382,15 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
   <style>
     :root {
       --bg: #030712;
-      --card-bg: rgba(15, 23, 42, 0.85);
-      --border: rgba(56, 189, 248, 0.25);
+      --surface: #0f172a;
+      --border: #1e293b;
       --primary: #38bdf8;
-      --accent: #818cf8;
       --text: #f8fafc;
       --muted: #94a3b8;
     }
     body {
       margin: 0;
-      background: radial-gradient(circle at 50% 10%, #0c1838, var(--bg));
+      background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, sans-serif;
       min-height: 100vh;
@@ -305,23 +399,22 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
       justify-content: center;
     }
     .container {
-      background: var(--card-bg);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2.5rem;
+      border-radius: 12px;
+      padding: 2rem;
       max-width: 520px;
       width: 90%;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
       text-align: center;
     }
     .badge {
       display: inline-block;
-      padding: 4px 12px;
-      font-size: 0.75rem;
+      padding: 4px 10px;
+      font-size: 0.72rem;
       font-weight: 700;
-      border-radius: 9999px;
-      background: rgba(56, 189, 248, 0.15);
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
       color: var(--primary);
       border: 1px solid rgba(56, 189, 248, 0.3);
       margin-bottom: 1rem;
@@ -329,34 +422,60 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
       letter-spacing: 0.05em;
     }
     h1 {
-      font-size: 2rem;
+      font-size: 1.85rem;
       margin: 0 0 0.5rem;
-      background: linear-gradient(135deg, #fff, var(--primary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--text);
     }
     p { color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
     .btn {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: #fff;
-      border: none;
-      padding: 10px 24px;
+      background: #0284c7;
+      color: #ffffff;
+      border: 1px solid #38bdf8;
+      padding: 10px 20px;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
-      transition: transform 0.15s ease;
     }
-    .btn:hover { transform: translateY(-2px); }
+    .btn:hover { background: #0369a1; }
+    pre {
+      margin-top: 1.25rem;
+      text-align: left;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 0.8rem;
+      color: #a7f3d0;
+      overflow-x: auto;
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="badge">${options.template} edition</div>
+    <div class="badge">${options.template} edition • v${CENTAURY_VERSION}</div>
     <h1>${projectName}</h1>
-    <p>Constructed with the high-performance <strong>Centaury Framework</strong> for autonomous super-intelligent architectures.</p>
-    <button class="btn" onclick="alert('⚡ Centaury Zero-Hydration event fired!')">Explore Application</button>
+    <p>Constructed with <strong>Centaury Framework</strong> for autonomous fullstack &amp; Dual-Citizen MCP architectures.</p>
+    <button class="btn" id="btn-test-rpc">Invoke RPC (${defaultRpcProc})</button>
+    <pre id="rpc-output"></pre>
   </div>
+  <script>
+    document.getElementById('btn-test-rpc').addEventListener('click', async () => {
+      const out = document.getElementById('rpc-output');
+      out.style.display = 'block';
+      out.textContent = 'Invoking /rpc...';
+      try {
+        const res = await fetch('/rpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ procedure: '${defaultRpcProc}', input: ${JSON.stringify(defaultRpcInput)} })
+        });
+        out.textContent = JSON.stringify(await res.json(), null, 2);
+      } catch (err) {
+        out.textContent = 'RPC Error: ' + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
 `;
@@ -368,13 +487,12 @@ console.log('🌌 Centaury Fullstack server running at http://localhost:3000');
   if (options.install) {
     console.log(`\n📦 Linking Centaury packages & installing dependencies in ${projectName}...`);
 
-    // Automatically link local @rudyrustam packages
     const pkgsToLink = ['@rudyrustam/core', '@rudyrustam/signals'];
     if (options.template === 'fullstack' || options.template === 'agentic') {
-      pkgsToLink.push('@rudyrustam/ephemeral');
+      pkgsToLink.push('@rudyrustam/ephemeral', '@rudyrustam/auth');
     }
     if (options.template === 'agentic') {
-      pkgsToLink.push('@rudyrustam/astra', '@rudyrustam/agent');
+      pkgsToLink.push('@rudyrustam/astra', '@rudyrustam/agent', '@rudyrustam/db', '@rudyrustam/workflow');
     }
 
     for (const pkg of pkgsToLink) {

@@ -1,6 +1,6 @@
 {
   "name": "@rudyrustam/agent",
-  "version": "1.1.0-alpha",
+  "version": "1.2.0-alpha",
   "description": "Dual-Citizen Model Context Protocol (MCP v1.x) & Live AST Reflector for Centaury",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

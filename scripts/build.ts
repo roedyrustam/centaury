@@ -149,7 +149,7 @@ async function runBuild() {
     const pkgDeclarationsSrc = join(tempDeclarationsDir, b.pkgDir, 'src');
     if (existsSync(pkgDeclarationsSrc)) {
       cpSync(pkgDeclarationsSrc, b.outdir, { recursive: true });
-      console.log(`  \x1b[32m✓\x1b[0m [DTS] @centaury/${b.name} declarations mapped to ${b.outdir}`);
+      console.log(`  \x1b[32m✓\x1b[0m [DTS] @rudyrustam/${b.name} declarations mapped to ${b.outdir}`);
     }
   }
 

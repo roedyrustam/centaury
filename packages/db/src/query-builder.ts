@@ -9,6 +9,26 @@ import type { CentauryDatabase } from './database';
 
 export type OrderDirection = 'ASC' | 'DESC';
 
+const SAFE_IDENTIFIER_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+const SAFE_SELECT_FIELD_REGEX =
+  /^(?:\*|[a-zA-Z_][a-zA-Z0-9_]*(?:\.(?:\*|[a-zA-Z_][a-zA-Z0-9_]*))?|[A-Za-z_][A-Za-z0-9_]*\((?:\*|[a-zA-Z_][a-zA-Z0-9_]*)\))(?:\s+[aA][sS]\s+[a-zA-Z_][a-zA-Z0-9_]*)?$/;
+
+function assertSafeIdentifier(identifier: string, label: string): string {
+  const trimmed = identifier.trim();
+  if (!SAFE_IDENTIFIER_REGEX.test(trimmed)) {
+    throw new Error(`QueryBuilder: unsafe ${label} '${identifier}'`);
+  }
+  return trimmed;
+}
+
+function assertSafeSelectField(field: string): string {
+  const trimmed = field.trim();
+  if (/[;'"`]|--|\/\*/.test(trimmed) || !SAFE_SELECT_FIELD_REGEX.test(trimmed)) {
+    throw new Error(`QueryBuilder: unsafe SELECT projection '${field}'`);
+  }
+  return trimmed;
+}
+
 export class CentauryQueryBuilder<T = Record<string, unknown>> {
   private db?: CentauryDatabase;
   private mode: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' = 'SELECT';
@@ -131,15 +151,14 @@ export class CentauryQueryBuilder<T = Record<string, unknown>> {
    * Compile the query into parameterized SQL and parameter values
    */
   public toSql(): { sql: string; params: unknown[] } {
-    if (!this.table) {
-      throw new Error('QueryBuilder: table name is required');
-    }
+    const safeTable = assertSafeIdentifier(this.table, 'table name');
 
     const params: unknown[] = [];
     let sql = '';
 
     if (this.mode === 'SELECT') {
-      sql = `SELECT ${this.selectedFields.join(', ')} FROM ${this.table}`;
+      const safeFields = this.selectedFields.map(assertSafeSelectField);
+      sql = `SELECT ${safeFields.join(', ')} FROM ${safeTable}`;
 
       if (this.whereClauses.length > 0) {
         const whereParts: string[] = [];
@@ -152,7 +171,8 @@ export class CentauryQueryBuilder<T = Record<string, unknown>> {
       }
 
       if (this.orderByClause) {
-        sql += ` ORDER BY ${this.orderByClause.column} ${this.orderByClause.direction}`;
+        const safeOrderCol = assertSafeIdentifier(this.orderByClause.column, 'ORDER BY column');
+        sql += ` ORDER BY ${safeOrderCol} ${this.orderByClause.direction}`;
       }
 
       if (typeof this.limitValue === 'number') {
@@ -167,7 +187,7 @@ export class CentauryQueryBuilder<T = Record<string, unknown>> {
         throw new Error('QueryBuilder: No data provided for INSERT');
       }
 
-      const columns = Object.keys(this.insertData[0]);
+      const columns = Object.keys(this.insertData[0]).map((col) => assertSafeIdentifier(col, 'column name'));
       if (columns.length === 0) {
         throw new Error('QueryBuilder: INSERT data contains no columns');
       }
@@ -181,7 +201,7 @@ export class CentauryQueryBuilder<T = Record<string, unknown>> {
         }
       }
 
-      sql = `INSERT INTO ${this.table} (${columns.join(', ')}) VALUES ${rowsPlaceholders.join(', ')}`;
+      sql = `INSERT INTO ${safeTable} (${columns.join(', ')}) VALUES ${rowsPlaceholders.join(', ')}`;
     } else if (this.mode === 'UPDATE') {
       if (!this.updateData || Object.keys(this.updateData).length === 0) {
         throw new Error('QueryBuilder: No data provided for UPDATE');
@@ -189,11 +209,12 @@ export class CentauryQueryBuilder<T = Record<string, unknown>> {
 
       const setClauses: string[] = [];
       for (const [key, val] of Object.entries(this.updateData)) {
-        setClauses.push(`${key} = ?`);
+        const safeCol = assertSafeIdentifier(key, 'column name');
+        setClauses.push(`${safeCol} = ?`);
         params.push(val);
       }
 
-      sql = `UPDATE ${this.table} SET ${setClauses.join(', ')}`;
+      sql = `UPDATE ${safeTable} SET ${setClauses.join(', ')}`;
 
       if (this.whereClauses.length > 0) {
         const whereParts: string[] = [];
@@ -205,7 +226,7 @@ export class CentauryQueryBuilder<T = Record<string, unknown>> {
         sql += ` WHERE ${whereParts.join('')}`;
       }
     } else if (this.mode === 'DELETE') {
-      sql = `DELETE FROM ${this.table}`;
+      sql = `DELETE FROM ${safeTable}`;
 
       if (this.whereClauses.length > 0) {
         const whereParts: string[] = [];

@@ -3,7 +3,7 @@
  * @description Native Model Context Protocol (MCP v1.x) Server for Centaury Dual-Citizen AI Agents
  */
 
-import { CentauryServer, CentauryContext } from '@rudyrustam/core';
+import { CENTAURY_VERSION, CentauryServer, CentauryContext, type CentauryPlugin } from '@rudyrustam/core';
 import { CentauryInspector } from './inspector';
 import { CentauryAgentMemory } from './memory';
 import { CentauryPromptFirewall } from './firewall';
@@ -64,7 +64,7 @@ export class CentauryMCPServer {
               },
               serverInfo: {
                 name: 'Centaury Dual-Citizen MCP Server',
-                version: '1.0.0-alpha',
+                version: CENTAURY_VERSION,
               },
             },
           };
@@ -318,4 +318,62 @@ export class CentauryMCPServer {
     }
     throw new Error(`Resource '${uri}' not found`);
   }
+}
+
+export interface McpPluginOptions {
+  /** HTTP endpoint path for MCP JSON-RPC 2.0 requests. Default: '/mcp' */
+  path?: string;
+}
+
+/**
+ * Mounts an HTTP JSON-RPC 2.0 MCP v1.x server endpoint (`POST /mcp` & `GET /mcp/tools`) onto a CentauryServer.
+ */
+export function mcpPlugin(mcp: CentauryMCPServer, options: McpPluginOptions = {}): CentauryPlugin {
+  const rawPath = options.path ?? '/mcp';
+  const endpoint = rawPath.startsWith('/') ? rawPath.replace(/\/+$/, '') || '/mcp' : `/${rawPath}`;
+
+  return {
+    name: 'centaury:mcp',
+    version: CENTAURY_VERSION,
+    install(server) {
+      server.post(endpoint, async (ctx) => {
+        let body: JsonRpcRequest;
+        try {
+          body = await ctx.json<JsonRpcRequest>();
+        } catch {
+          return ctx.jsonResponse(
+            {
+              jsonrpc: '2.0',
+              id: null,
+              error: { code: -32700, message: 'Parse error: Invalid JSON-RPC 2.0 payload' },
+            },
+            400
+          );
+        }
+
+        if (!body || body.jsonrpc !== '2.0' || typeof body.method !== 'string') {
+          return ctx.jsonResponse(
+            {
+              jsonrpc: '2.0',
+              id: body && 'id' in body ? body.id : null,
+              error: { code: -32600, message: "Invalid Request: expected { jsonrpc: '2.0', method: string }" },
+            },
+            400
+          );
+        }
+
+        const rpcResponse = await mcp.handleJsonRpc(body);
+        return ctx.jsonResponse(rpcResponse);
+      });
+
+      server.get(`${endpoint}/tools`, async (ctx) => {
+        const listRes = await mcp.handleJsonRpc({
+          jsonrpc: '2.0',
+          id: 'tools-list',
+          method: 'tools/list',
+        });
+        return ctx.jsonResponse(listRes.result ?? { tools: [] });
+      });
+    },
+  };
 }

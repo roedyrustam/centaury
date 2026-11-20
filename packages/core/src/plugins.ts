@@ -23,7 +23,7 @@ export interface SecurityHeadersOptions {
  * Enterprise Security Headers Plugin: enforces CSP, HSTS, X-Frame-Options, X-Content-Type-Options
  */
 export function securityHeadersPlugin(options: SecurityHeadersOptions = {}): CentauryPlugin {
-  const csp = options.contentSecurityPolicy ?? "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: wss:;";
+  const csp = options.contentSecurityPolicy ?? "default-src 'self' 'unsafe-inline' data: blob: wss:;";
   const frameOptions = options.frameOptions ?? 'DENY';
 
   return {
@@ -48,6 +48,7 @@ export function securityHeadersPlugin(options: SecurityHeadersOptions = {}): Cen
 export interface RateLimiterOptions {
   windowMs?: number;
   maxRequests?: number;
+  maxEntries?: number;
   keyGenerator?: (ctx: CentauryContext) => string;
 }
 
@@ -57,6 +58,7 @@ export interface RateLimiterOptions {
 export function rateLimiterPlugin(options: RateLimiterOptions = {}): CentauryPlugin {
   const windowMs = options.windowMs ?? 60000;
   const max = options.maxRequests ?? 100;
+  const maxEntries = options.maxEntries ?? 10_000;
   const keyGen = options.keyGenerator ?? ((ctx) => {
     return ctx.req.headers.get('x-forwarded-for') || '127.0.0.1';
   });
@@ -65,11 +67,22 @@ export function rateLimiterPlugin(options: RateLimiterOptions = {}): CentauryPlu
 
   return {
     name: 'centaury:rate-limiter',
-    version: '1.0.0',
+    version: '1.2.0',
     install(server) {
       server.use(async (ctx, next) => {
         const key = keyGen(ctx);
         const now = Date.now();
+
+        if (!hits.has(key) && hits.size >= maxEntries) {
+          for (const [k, rec] of hits.entries()) {
+            if (now > rec.resetAt) hits.delete(k);
+          }
+          if (hits.size >= maxEntries) {
+            const oldestKey = hits.keys().next().value;
+            if (oldestKey !== undefined) hits.delete(oldestKey);
+          }
+        }
+
         const record = hits.get(key);
 
         if (!record || now > record.resetAt) {

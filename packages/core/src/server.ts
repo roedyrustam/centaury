@@ -7,7 +7,36 @@ import { CentauryContext } from './context';
 import { CentauryRouter, RouteHandler, MiddlewareHandler } from './router';
 import { CentauryRPC, ProcedureDefinition } from './rpc';
 import type { CentauryPlugin } from './plugins';
+import { CENTAURY_VERSION, CENTAURY_ENGINE_LABEL } from './version';
+import { statSync } from 'fs';
+import { extname, resolve, sep } from 'path';
 import type { Server, ServerWebSocket } from 'bun';
+
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.mjs': 'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.txt': 'text/plain; charset=utf-8',
+  '.woff2': 'font/woff2',
+};
+
+export type WebSocketMessageHandler = (
+  ws: ServerWebSocket<WebSocketData>,
+  parsed: Record<string, unknown> | null,
+  raw: string | Buffer
+) => void;
+
+export interface StaticServeOptions {
+  cacheControl?: string;
+}
 
 export interface CentauryServerOptions {
   port?: number;
@@ -32,18 +61,22 @@ export class CentauryServer {
   public readonly options: CentauryServerOptions;
   private serverInstance: Server<WebSocketData> | null = null;
   private activeWebSockets = new Set<ServerWebSocket<WebSocketData>>();
+  private wsMessageHandlers: WebSocketMessageHandler[] = [];
   private serverState = new Map<string, unknown>();
 
   constructor(options: CentauryServerOptions = {}) {
     this.options = {
       port: options.port ?? 3000,
       hostname: options.hostname ?? '0.0.0.0',
-      staticDir: options.staticDir ?? 'public',
+      staticDir: options.staticDir,
       cors: options.cors ?? true,
       ai: options.ai,
     };
 
     this.setupBuiltinRoutes();
+    if (this.options.staticDir) {
+      this.serveStatic('/', this.options.staticDir);
+    }
   }
 
   private setupBuiltinRoutes(): void {
@@ -71,7 +104,8 @@ export class CentauryServer {
     this.router.get('/_health', (ctx) => {
       return ctx.jsonResponse({
         status: 'online',
-        engine: 'Centaury 1.0.0-alpha',
+        engine: CENTAURY_ENGINE_LABEL,
+        version: CENTAURY_VERSION,
         runtime: 'Bun ' + Bun.version,
         activeConnections: this.activeWebSockets.size,
         uptime: process.uptime(),
@@ -89,7 +123,7 @@ export class CentauryServer {
         mcpVersion: '1.0.0',
         serverInfo: {
           name: 'Centaury Dual-Citizen Engine',
-          version: '1.0.0-alpha',
+          version: CENTAURY_VERSION,
         },
         capabilities: {
           tools: true,
@@ -99,7 +133,7 @@ export class CentauryServer {
         tools: this.rpcEngine.getMetadata().map((m) => ({
           name: m.name,
           description: m.description ?? `Invoke Centaury RPC procedure '${m.name}'`,
-          inputSchema: { type: 'object' },
+          inputSchema: m.inputSchema,
         })),
         routes: this.router.listRoutes(),
       });
@@ -119,8 +153,108 @@ export class CentauryServer {
     return this;
   }
 
+  public put(path: string, handler: RouteHandler): this {
+    this.router.put(path, handler);
+    return this;
+  }
+
+  public delete(path: string, handler: RouteHandler): this {
+    this.router.delete(path, handler);
+    return this;
+  }
+
+  public patch(path: string, handler: RouteHandler): this {
+    this.router.patch(path, handler);
+    return this;
+  }
+
+  public optionsMethod(path: string, handler: RouteHandler): this {
+    this.router.options(path, handler);
+    return this;
+  }
+
+  public all(path: string, handler: RouteHandler): this {
+    this.router.all(path, handler);
+    return this;
+  }
+
   public use(middleware: MiddlewareHandler): this {
     this.router.use(middleware);
+    return this;
+  }
+
+  /**
+   * Register a custom handler for incoming WebSocket frames
+   */
+  public onWebSocketMessage(handler: WebSocketMessageHandler): this {
+    this.wsMessageHandlers.push(handler);
+    return this;
+  }
+
+  /**
+   * Serve static files from a local directory with strict path-traversal confinement
+   */
+  public serveStatic(urlPrefix: string, directory: string, options: StaticServeOptions = {}): this {
+    const rootDir = resolve(directory);
+    const normalizedPrefix = urlPrefix === '/' ? '' : `/${urlPrefix.replace(/^\/+|\/+$/g, '')}`;
+    const cacheControl = options.cacheControl ?? 'public, max-age=3600';
+
+    const serveRelativePath = (ctx: CentauryContext, relInput: string): Response => {
+      if (relInput.includes('\0')) {
+        return ctx.errorResponse('Forbidden', 403, 'Null byte in static asset path is not permitted');
+      }
+
+      let decoded = relInput;
+      try {
+        decoded = decodeURIComponent(relInput);
+      } catch {
+        return ctx.errorResponse('Bad Request', 400, 'Malformed URI encoding in asset path');
+      }
+
+      const cleanRel = decoded.replace(/\\/g, '/').replace(/^\/+/, '');
+      const segments = cleanRel.split('/').filter(Boolean);
+      if (segments.some((s) => s === '..')) {
+        return ctx.errorResponse('Forbidden', 403, 'Path traversal outside static directory is not permitted');
+      }
+
+      const targetRel = segments.length === 0 ? 'index.html' : segments.join('/');
+      let resolved = resolve(rootDir, targetRel);
+      if (resolved !== rootDir && !resolved.startsWith(rootDir + sep)) {
+        return ctx.errorResponse('Forbidden', 403, 'Path traversal outside static directory is not permitted');
+      }
+
+      try {
+        let stats = statSync(resolved);
+        if (stats.isDirectory()) {
+          resolved = resolve(resolved, 'index.html');
+          stats = statSync(resolved);
+        }
+        if (!stats.isFile()) {
+          return ctx.errorResponse('Not Found', 404, `Static asset '${targetRel}' not found`);
+        }
+      } catch {
+        return ctx.errorResponse('Not Found', 404, `Static asset '${targetRel}' not found`);
+      }
+
+      const ext = extname(resolved).toLowerCase();
+      const contentType = MIME_TYPES[ext] ?? 'application/octet-stream';
+      return new Response(Bun.file(resolved), {
+        status: 200,
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': cacheControl,
+        },
+      });
+    };
+
+    const wildcardRoute = normalizedPrefix ? `${normalizedPrefix}/*` : '/*';
+    this.router.get(wildcardRoute, (ctx) => serveRelativePath(ctx, ctx.params['*'] ?? ''));
+
+    const indexRoute = normalizedPrefix || '/';
+    if (!this.router.match('GET', indexRoute)) {
+      this.router.get(indexRoute, (ctx) => serveRelativePath(ctx, 'index.html'));
+    }
+
     return this;
   }
 
@@ -195,20 +329,30 @@ export class CentauryServer {
             JSON.stringify({
               type: 'system.connect',
               sessionId: ws.data.sessionId,
-              engine: 'Centaury 1.0.0-alpha',
+              engine: CENTAURY_ENGINE_LABEL,
               serverTime: Date.now(),
             })
           );
         },
         message(ws, message) {
-          try {
-            const parsed = typeof message === 'string' ? JSON.parse(message) : null;
-            if (parsed?.type === 'subscribe' && typeof parsed.topic === 'string') {
-              ws.data.subscriptions.add(parsed.topic);
-              ws.send(JSON.stringify({ type: 'subscribed', topic: parsed.topic }));
+          let parsed: Record<string, unknown> | null = null;
+          if (typeof message === 'string') {
+            try {
+              parsed = JSON.parse(message) as Record<string, unknown>;
+              if (parsed?.type === 'subscribe' && typeof parsed.topic === 'string') {
+                ws.data.subscriptions.add(parsed.topic);
+                ws.send(JSON.stringify({ type: 'subscribed', topic: parsed.topic }));
+              }
+            } catch {
+              parsed = null;
             }
-          } catch {
-            // Ignore non-json socket frames
+          }
+          for (const handler of self.wsMessageHandlers) {
+            try {
+              handler(ws, parsed, message);
+            } catch {
+              // Keep live socket active if user handler throws
+            }
           }
         },
         close(ws) {

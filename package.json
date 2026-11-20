@@ -1,6 +1,6 @@
 {
   "name": "centaury-monorepo",
-  "version": "1.1.0-alpha",
+  "version": "1.2.0-alpha",
   "private": true,
   "description": "The Autonomous Fullstack Engine for Super-Intelligent Systems (Gemini 4 Pro, Project Astra, Dual-Citizen MCP v1.x, Zero-Hydration Signals, Ephemeral UI)",
   "workspaces": [

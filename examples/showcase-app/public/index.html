@@ -174,8 +174,8 @@
 
         <!-- Live Terminal Stream Output -->
         <div class="console-window" id="console-stream">
-          <div class="console-line success">✓ Centaury Engine 1.0.0-alpha online (Bun 1.3.14)</div>
-          <div class="console-line agent">[MCP] Dual-Citizen Protocol initialized (version: 2024-11-05)</div>
+          <div class="console-line success">✓ Centaury Engine 1.2.0-alpha online (Bun Runtime)</div>
+          <div class="console-line agent">[MCP] Dual-Citizen Protocol initialized (/mcp &amp; /.well-known/mcp.json)</div>
           <div class="console-line event">[WS] Connected to Unified Realtime Stream at /api/live</div>
         </div>
 
@@ -215,6 +215,54 @@
         <div id="memory-search-results" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.75rem;"></div>
       </section>
 
+      <!-- Column 6: Prompt Firewall, MCP JSON-RPC & Self-Healer -->
+      <section class="glass-card" id="card-security">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Prompt Firewall &amp; Self-Healer (@rudyrustam/agent)
+          </h2>
+          <span class="tag-badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">Zero-Trust Guard</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Inspeksi prompt injection/SSRF/PII secara real-time, akses MCP JSON-RPC di <code>POST /mcp</code>, dan diagnostik Self-Healer.
+        </p>
+
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+          <input type="text" id="input-audit-prompt" placeholder="Masukkan prompt uji..." value="Summarize metrics for alice@centaury.dev" style="flex: 1; padding: 0.6rem 0.9rem; border-radius: 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-family: inherit;">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" id="btn-audit-prompt">Audit Prompt</button>
+          <button class="btn btn-secondary" id="btn-mcp-tools">POST /mcp (tools/list)</button>
+          <button class="btn btn-secondary" id="btn-heal-diagnostics">/_heal/diagnostics</button>
+        </div>
+
+        <div id="security-output" style="margin-top: 1rem; font-family: var(--font-mono); font-size: 0.8rem; color: #cbd5e1; white-space: pre-wrap;"></div>
+      </section>
+
+      <!-- Column 7: A2A Swarm & Durable Workflow Saga -->
+      <section class="glass-card" id="card-workflow">
+        <div class="card-header">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="12" r="3"/><line x1="8.5" y1="7.5" x2="15.5" y2="10.5"/><line x1="8.5" y1="16.5" x2="15.5" y2="13.5"/></svg>
+            A2A &amp; Durable Saga Workflow (@rudyrustam/workflow)
+          </h2>
+          <span class="tag-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">SQLite Replay + A2A</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Eksekusi workflow paralel dengan checkpoint SQLite dan penemuan Agent-to-Agent di <code>/.well-known/agent.json</code>.
+        </p>
+
+        <div class="btn-group">
+          <button class="btn" id="btn-run-workflow">Run Parallel Saga Demo</button>
+          <button class="btn btn-secondary" id="btn-agent-card">Inspect Agent Card</button>
+          <button class="btn btn-secondary" id="btn-a2a-tasks">List A2A Tasks</button>
+        </div>
+
+        <div id="workflow-output" style="margin-top: 1rem; font-family: var(--font-mono); font-size: 0.8rem; color: #cbd5e1; white-space: pre-wrap;"></div>
+      </section>
+
     </div>
 
   </main>
@@ -224,7 +272,12 @@
 
   <!-- Footer -->
   <footer>
-    Centaury Framework © 2026. Built with Pride for Google Gemini 4 Pro & Project Astra. Powered by Bun & TypeScript.
+    <div>Centaury Framework v1.2.0-alpha © 2026. Built with Pride for Google Gemini 4 Pro &amp; Project Astra. Powered by Bun &amp; TypeScript.</div>
+    <div style="margin-top: 0.5rem; display: flex; justify-content: center; gap: 1.25rem; font-size: 0.85rem;">
+      <a href="/privacy" style="color: #38bdf8; text-decoration: none;">Privacy Policy</a>
+      <a href="/terms" style="color: #38bdf8; text-decoration: none;">Terms &amp; Conditions</a>
+      <a href="/delete-account" style="color: #f87171; text-decoration: none;">Delete User Data</a>
+    </div>
   </footer>
 
   <!-- Centaury Real-Time Client Devtools HUD -->

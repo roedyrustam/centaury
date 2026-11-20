@@ -11,7 +11,7 @@
  *   \n
  */
 
-import type { CentauryContext } from '@rudyrustam/core';
+import { CENTAURY_VERSION, type CentauryContext } from '@rudyrustam/core';
 import { CentauryEventBus, type SseEvent } from './event-bus';
 
 export interface SseHandlerOptions {
@@ -136,7 +136,7 @@ export function createSseResponse(
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
       'X-Accel-Buffering': 'no', // Disable Nginx proxy buffering
-      'X-Centaury-SSE': '1.0.0-alpha',
+      'X-Centaury-SSE': CENTAURY_VERSION,
       'Access-Control-Allow-Origin': '*',
     },
   });

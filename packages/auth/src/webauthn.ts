@@ -8,6 +8,8 @@ export interface PasskeyManagerOptions {
   rpName?: string;
   /** Challenge expiration window in milliseconds. Default: 120000 (2 minutes) */
   challengeTtlMs?: number;
+  /** Optional allowlist of expected clientDataJSON origins */
+  expectedOrigins?: string[];
 }
 
 export interface PasskeyChallenge {
@@ -49,12 +51,32 @@ export class CentauryPasskeyManager {
   private readonly rpId: string;
   private readonly rpName: string;
   private readonly challengeTtlMs: number;
+  private readonly expectedOrigins?: Set<string>;
   private readonly activeChallenges = new Map<string, PasskeyChallenge>();
 
   constructor(options: PasskeyManagerOptions = {}) {
     this.rpId = options.rpId ?? 'localhost';
     this.rpName = options.rpName ?? 'Centaury Application';
     this.challengeTtlMs = options.challengeTtlMs ?? 120_000;
+    this.expectedOrigins = options.expectedOrigins ? new Set(options.expectedOrigins) : undefined;
+  }
+
+  /**
+   * Prune expired challenges from memory and return the number evicted.
+   */
+  public pruneExpiredChallenges(now = Date.now()): number {
+    let pruned = 0;
+    for (const [id, record] of this.activeChallenges.entries()) {
+      if (now > record.expiresAt) {
+        this.activeChallenges.delete(id);
+        pruned++;
+      }
+    }
+    return pruned;
+  }
+
+  public get activeChallengeCount(): number {
+    return this.activeChallenges.size;
   }
 
   /**
@@ -65,6 +87,7 @@ export class CentauryPasskeyManager {
     userName: string,
     displayName = userName
   ): PasskeyRegistrationOptions {
+    this.pruneExpiredChallenges();
     const challengeId = crypto.randomUUID();
     const challenge = generateChallengeBase64Url();
     const record: PasskeyChallenge = {
@@ -96,6 +119,7 @@ export class CentauryPasskeyManager {
    * Generate a WebAuthn authentication challenge for passwordless sign-in.
    */
   public createAuthenticationChallenge(userId: string): PasskeyChallenge {
+    this.pruneExpiredChallenges();
     const challengeId = crypto.randomUUID();
     const record: PasskeyChallenge = {
       challengeId,
@@ -145,6 +169,16 @@ export class CentauryPasskeyManager {
           challengeId,
           error: `Unexpected ceremony type '${parsed.type}', expected '${expectedType}'`,
         };
+      }
+
+      if (this.expectedOrigins) {
+        if (!parsed.origin || !this.expectedOrigins.has(parsed.origin)) {
+          return {
+            verified: false,
+            challengeId,
+            error: `Unexpected origin '${parsed.origin ?? ''}'`,
+          };
+        }
       }
 
       if (parsed.challenge !== record.challenge) {

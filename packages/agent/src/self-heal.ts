@@ -4,6 +4,9 @@
  */
 
 import type { CentauryPlugin } from '@rudyrustam/core';
+import { existsSync, readFileSync } from 'fs';
+import { resolve, sep } from 'path';
+import { fileURLToPath } from 'url';
 
 export type ErrorCategory =
   | 'TypeError'
@@ -19,6 +22,13 @@ export interface StackFrameInfo {
   column: number;
 }
 
+export interface SourceSnippet {
+  file: string;
+  startLine: number;
+  focusLine: number;
+  snippet: string;
+}
+
 export interface HealingDiagnostic {
   id: string;
   timestamp: string;
@@ -27,12 +37,15 @@ export interface HealingDiagnostic {
   context?: string;
   astTarget: string;
   frames: StackFrameInfo[];
+  sourceContext?: SourceSnippet;
   suggestedFix: string;
 }
 
 export interface SelfHealerOptions {
   /** Maximum diagnostics retained in the circular buffer. Default: 100 */
   maxHistory?: number;
+  /** Workspace root used to safely extract source context around crash lines */
+  workspaceRoot?: string;
   /** Optional callback invoked whenever a crash diagnostic is captured */
   onDiagnostic?: (diag: HealingDiagnostic) => void;
 }
@@ -100,16 +113,64 @@ function classifyError(err: Error): { category: ErrorCategory; suggestedFix: str
   };
 }
 
+function extractSourceContext(
+  frame: StackFrameInfo | undefined,
+  workspaceRoot?: string
+): SourceSnippet | undefined {
+  if (!frame || !workspaceRoot || !Number.isFinite(frame.line) || frame.line < 1) {
+    return undefined;
+  }
+
+  let filePath = frame.file;
+  if (filePath.startsWith('file://')) {
+    try {
+      filePath = fileURLToPath(filePath);
+    } catch {
+      return undefined;
+    }
+  }
+
+  const rootDir = resolve(workspaceRoot);
+  const resolvedFile = resolve(filePath);
+  if (resolvedFile !== rootDir && !resolvedFile.startsWith(rootDir + sep)) {
+    return undefined;
+  }
+  if (!existsSync(resolvedFile)) {
+    return undefined;
+  }
+
+  try {
+    const lines = readFileSync(resolvedFile, 'utf-8').split(/\r?\n/);
+    const startIdx = Math.max(0, frame.line - 4);
+    const endIdx = Math.min(lines.length, frame.line + 3);
+    const snippet = lines
+      .slice(startIdx, endIdx)
+      .map((content, i) => `${startIdx + i + 1}: ${content}`)
+      .join('\n');
+
+    return {
+      file: resolvedFile,
+      startLine: startIdx + 1,
+      focusLine: frame.line,
+      snippet,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Captures runtime errors, maps stack frames to AST targets, and coordinates graceful fallbacks.
  */
 export class CentaurySelfHealer {
   private diagnostics: HealingDiagnostic[] = [];
   private readonly maxHistory: number;
+  private readonly workspaceRoot?: string;
   private readonly onDiagnostic?: (diag: HealingDiagnostic) => void;
 
   constructor(options: SelfHealerOptions = {}) {
     this.maxHistory = options.maxHistory ?? 100;
+    this.workspaceRoot = options.workspaceRoot;
     this.onDiagnostic = options.onDiagnostic;
   }
 
@@ -124,6 +185,7 @@ export class CentaurySelfHealer {
     const astTarget = primaryFrame
       ? `${primaryFrame.file}:${primaryFrame.line}:${primaryFrame.column} (${primaryFrame.functionName})`
       : 'unknown';
+    const sourceContext = extractSourceContext(primaryFrame, this.workspaceRoot);
 
     const diagnostic: HealingDiagnostic = {
       id: `heal-${crypto.randomUUID().slice(0, 8)}`,
@@ -133,6 +195,7 @@ export class CentaurySelfHealer {
       context: contextInfo,
       astTarget,
       frames,
+      ...(sourceContext ? { sourceContext } : {}),
       suggestedFix,
     };
 

@@ -13,7 +13,7 @@
  *   bus.publish('orders', { data: { id: 'ord_123', status: 'filled' } });
  */
 
-import type { CentauryPlugin, CentauryServer } from '@rudyrustam/core';
+import { CENTAURY_VERSION, type CentauryPlugin, type CentauryServer } from '@rudyrustam/core';
 import { CentauryEventBus } from './event-bus';
 import { createSseResponse } from './sse-handler';
 
@@ -45,7 +45,7 @@ export function ssePlugin(bus: CentauryEventBus, options: SsePluginOptions = {})
 
   return {
     name: 'centaury:sse',
-    version: '1.0.0-alpha',
+    version: CENTAURY_VERSION,
     install(server: CentauryServer) {
       // 1. Topic-specific SSE endpoint: GET /sse/:topic
       server.get(`${basePath}/:topic`, (ctx) => {
@@ -71,7 +71,7 @@ export function ssePlugin(bus: CentauryEventBus, options: SsePluginOptions = {})
       // 3. Diagnostics endpoint: GET /sse/_stats
       server.get(`${basePath}/_stats`, (ctx) => {
         return ctx.jsonResponse({
-          engine: 'Centaury SSE Event Bus 1.0.0-alpha',
+          engine: `Centaury SSE Event Bus ${CENTAURY_VERSION}`,
           uptime: process.uptime(),
           totalEvents: bus.totalEvents,
           topicCount: bus.topicCount,

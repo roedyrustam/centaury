@@ -1,12 +1,12 @@
 # Centaury Framework — Progress Tracker
 
 ## Status Overview
-- **Active Phase**: ALL 14 PHASES 100% COMPLETED — Centaury `1.1.0-alpha` Ready! 🚀
+- **Active Phase**: ALL 17 PHASES 100% COMPLETED — Centaury `1.2.0-alpha` Ready! 🚀
 - **Package Topology**: 11 Modular `@rudyrustam/*` Packages (`core`, `signals`, `ephemeral`, `astra`, `sse`, `db`, `auth`, `workflow`, `agent`, `cli`, `centaury`)
-- **Test Pass Rate**: 100% (92/92 tests passing across 10 suites)
-- **Typecheck Status**: 0 errors (`tsc --noEmit` strictly clean)
-- **Engine Performance**: 16.6M ops/s signal reactivity, 10.0M matches/s Trie router, 7.5M ops/s vector cosine similarity, 2.12M queries/s SQLite prepared queries
-- **Showcase Status**: Live at http://localhost:3000
+- **Test Pass Rate**: 100% (100/100 tests, 413 assertions passing across 10 suites)
+- **Typecheck Status**: 0 errors (`tsc --noEmit` & showcase `server.ts` strictly clean)
+- **Engine Performance (Bun v1.4.2)**: 6.59M ops/s signal reactivity, 7.50M matches/s Trie router, 5.31M ops/s vector cosine similarity, 1.26M queries/s SQLite prepared queries, 224K parses/s ephemeral AST parser
+- **Showcase Status**: Updated v1.2.0-alpha (Firewall, MCP JSON-RPC, A2A & Parallel Saga UI)
 
 
 ---
@@ -134,4 +134,10 @@
 - [x] Pembaruan versi seluruh 11 paket monorepo ke `1.1.0-alpha` dan re-export umbrella melalui `@rudyrustam/centaury`.
 - [x] Integrasi plugin Firewall, Self-Healer, Legal Compliance Trio, dan A2A/Workflow demo ke `examples/showcase-app/server.ts`.
 - [x] Sinkronisasi `ROADMAP.md`, `PROGRESS.md`, `BLUEPRINT.md`, `PRD.md`, dan `README.md` serta verifikasi penuh (`build`, `typecheck`, `bun test`, `release:check`).
+
+### Phase 15–17: v1.2.0-alpha Deep Hardening, AI Gateway, Parallel Saga & CLI v1.2 [COMPLETED]
+- [x] Core hardening: `CENTAURY_VERSION`, `zodToJsonSchema`, `createRpcClient`, path-confinement `serveStatic`, router param/middleware fixes, CSP tanpa `unsafe-eval`, dan rate-limiter `maxEntries`.
+- [x] Reactive, Ephemeral, DB & Auth hardening: dynamic effect dependency cleanup, Devtools & Legal Trio HTML escaping, `<ui-header>`/`<ui-metric>` Shadow DOM attributes, SQLite identifier validation & async migration transactions, serta ketat HS256 & WebAuthn origin checks.
+- [x] Autonomous Intelligence: `CentauryAIGateway`, `mcpPlugin(mcp)`, source-aware `CentaurySelfHealer`, SQLite A2A tasks + SSE events, dan `.parallel()` workflow Saga compensation.
+- [x] CLI `centaury inspect [url]`, perbaikan template `agentic`/`fullstack`, normalisasi `bin` path (`npm pack` clean), Showcase App v3, dan E2E dual-template verification (**100/100 tests pass, 413 expect() calls, 0 failures**).
 

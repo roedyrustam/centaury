@@ -4,7 +4,7 @@
  */
 
 import { AstraAudioPipeline } from './audio';
-import { AstraVisionPipeline, NormalizedBoundingBox } from './vision';
+import { AstraVisionPipeline, NormalizedBoundingBox, type PixelBoundingBox } from './vision';
 
 export interface AstraGatewayOptions {
   onAudioChunk?: (pcm: Uint8Array) => void;
@@ -67,7 +67,12 @@ export class AstraGateway {
     boxes: NormalizedBoundingBox[],
     viewportWidth: number,
     viewportHeight: number
-  ) {
+  ): {
+    type: 'astra.grounding';
+    boxes: PixelBoundingBox[];
+    styles: string[];
+    timestamp: number;
+  } {
     const pixelBoxes = boxes.map((box) =>
       AstraVisionPipeline.normalizeToPixels(box, viewportWidth, viewportHeight)
     );

@@ -124,11 +124,21 @@ export class CentauryRouter {
 
       // 2. Parametric match (:id)
       if (node.paramChild) {
-        if (node.paramChild.paramName) {
-          params[node.paramChild.paramName] = segment;
+        const paramName = node.paramChild.paramName;
+        const hadPrev = paramName ? Object.prototype.hasOwnProperty.call(params, paramName) : false;
+        const prevVal = paramName ? params[paramName] : undefined;
+        if (paramName) {
+          params[paramName] = segment;
         }
         const res = findMatch(node.paramChild, index + 1);
         if (res) return res;
+        if (paramName) {
+          if (hadPrev && prevVal !== undefined) {
+            params[paramName] = prevVal;
+          } else {
+            delete params[paramName];
+          }
+        }
       }
 
       // 3. Wildcard match (*)
@@ -151,14 +161,11 @@ export class CentauryRouter {
    */
   public async handle(ctx: CentauryContext): Promise<Response> {
     const matchResult = this.match(ctx.method, ctx.url.pathname);
-    if (!matchResult) {
-      return ctx.errorResponse('Route Not Found', 404, `No handler registered for ${ctx.method} ${ctx.url.pathname}`);
+    if (matchResult) {
+      Object.assign(ctx.params, matchResult.params);
     }
 
-    // Merge extracted path parameters
-    Object.assign(ctx.params, matchResult.params);
-
-    // Build onion middleware chain
+    // Build onion middleware chain so global middleware (CORS, security headers, logging) always executes
     let idx = -1;
     const dispatch = async (i: number): Promise<Response> => {
       if (i <= idx) throw new Error('next() called multiple times in middleware');
@@ -166,6 +173,9 @@ export class CentauryRouter {
       if (i < this.middlewares.length) {
         const mw = this.middlewares[i];
         return await mw(ctx, () => dispatch(i + 1));
+      }
+      if (!matchResult) {
+        return ctx.errorResponse('Route Not Found', 404, `No handler registered for ${ctx.method} ${ctx.url.pathname}`);
       }
       return await matchResult.handler(ctx);
     };

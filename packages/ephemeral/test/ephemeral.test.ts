@@ -23,10 +23,13 @@ describe('@centaury/ephemeral Sanitizer & Security Policy', () => {
     expect(EphemeralSanitizer.isTagAllowed('object')).toBe(false);
   });
 
-  it('strips inline on* event handlers and javascript: URIs', () => {
+  it('strips inline on*, obfuscated javascript: URIs, and unsafe CSS expressions', () => {
     expect(EphemeralSanitizer.isAttrSafe('onclick', 'alert(1)')).toBe(false);
     expect(EphemeralSanitizer.isAttrSafe('onload', 'malicious()')).toBe(false);
     expect(EphemeralSanitizer.isAttrSafe('href', 'javascript:evil()')).toBe(false);
+    expect(EphemeralSanitizer.isAttrSafe('href', ' j\ta v\na s c r i p t :evil()')).toBe(false);
+    expect(EphemeralSanitizer.isAttrSafe('style', 'width: expression(alert(1))')).toBe(false);
+    expect(EphemeralSanitizer.isAttrSafe('style', 'color: #38bdf8;')).toBe(true);
     expect(EphemeralSanitizer.isAttrSafe('title', 'Safe title text')).toBe(true);
     expect(EphemeralSanitizer.isAttrSafe('action', 'trigger_quarantine')).toBe(true);
   });
@@ -63,6 +66,16 @@ describe('@centaury/ephemeral Streaming Token Parser', () => {
 
     expect(mountedCount).toBe(1);
     expect(parser.rootNodes[0].attrs.elevation).toBe('neon');
+  });
+
+  it('handles quoted greater-than characters inside streamed attributes safely', () => {
+    const parser = new EphemeralStreamParser();
+    parser.write('<ui-card title="SLO > 99.9% & latency < 50ms">');
+    parser.write('<span>Healthy</span>');
+    parser.write('</ui-card>');
+
+    expect(parser.rootNodes.length).toBe(1);
+    expect(parser.rootNodes[0].attrs.title).toBe('SLO > 99.9% & latency < 50ms');
   });
 });
 
@@ -114,5 +127,25 @@ describe('@centaury/ephemeral DOM Mounting & Event Dispatching', () => {
 
     host.innerHTML = '';
     expect(host.innerHTML).toBe('');
+  });
+
+  it('renders ui-header and ui-metric attributes safely inside Shadow DOM without XSS', () => {
+    const window = new Window();
+    registerEphemeralComponents(window.customElements as any, window.HTMLElement as any);
+    const header = window.document.createElement('ui-header') as any;
+    header.setAttribute('title', 'System <Status>');
+    header.setAttribute('badge', 'live');
+    window.document.body.appendChild(header);
+
+    expect(header.shadowRoot?.textContent).toContain('System <Status>');
+    expect(header.shadowRoot?.textContent).toContain('live');
+
+    const metric = window.document.createElement('ui-metric') as any;
+    metric.setAttribute('value', '99.95%');
+    metric.setAttribute('change', '+1.2%');
+    window.document.body.appendChild(metric);
+
+    expect(metric.shadowRoot?.textContent).toContain('99.95%');
+    expect(metric.shadowRoot?.textContent).toContain('+1.2%');
   });
 });

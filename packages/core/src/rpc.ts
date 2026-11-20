@@ -12,6 +12,108 @@ export interface ProcedureDefinition<TInput = unknown, TOutput = unknown> {
   handler: (args: { input: TInput; ctx: CentauryContext }) => Promise<TOutput> | TOutput;
 }
 
+export interface ProcedureMetadata {
+  name: string;
+  description?: string;
+  hasInputSchema: boolean;
+  inputSchema: Record<string, unknown>;
+}
+
+/**
+ * Convert a Zod schema into a compact JSON Schema 2020-12 / MCP compatible descriptor without external deps.
+ */
+export function zodToJsonSchema(schema?: z.ZodTypeAny): Record<string, unknown> {
+  if (!schema) {
+    return { type: 'object', properties: {} };
+  }
+
+  const def = (schema as unknown as { _def?: Record<string, any> })._def;
+  const desc = schema.description ?? def?.description;
+  const withDesc = (obj: Record<string, unknown>): Record<string, unknown> =>
+    desc ? { ...obj, description: desc } : obj;
+
+  if (!def || !def.typeName) {
+    return withDesc({ type: 'object', properties: {} });
+  }
+
+  switch (def.typeName) {
+    case 'ZodOptional':
+    case 'ZodDefault':
+      return withDesc(zodToJsonSchema(def.innerType));
+
+    case 'ZodNullable': {
+      const inner = zodToJsonSchema(def.innerType);
+      return withDesc({ anyOf: [inner, { type: 'null' }] });
+    }
+
+    case 'ZodString':
+      return withDesc({ type: 'string' });
+
+    case 'ZodNumber': {
+      const isInt = Array.isArray(def.checks) && def.checks.some((c: { kind?: string }) => c.kind === 'int');
+      return withDesc({ type: isInt ? 'integer' : 'number' });
+    }
+
+    case 'ZodBoolean':
+      return withDesc({ type: 'boolean' });
+
+    case 'ZodEnum':
+      return withDesc({ type: 'string', enum: Array.isArray(def.values) ? [...def.values] : [] });
+
+    case 'ZodLiteral': {
+      const literalType =
+        typeof def.value === 'number'
+          ? 'number'
+          : typeof def.value === 'boolean'
+            ? 'boolean'
+            : 'string';
+      return withDesc({ type: literalType, const: def.value });
+    }
+
+    case 'ZodArray':
+      return withDesc({
+        type: 'array',
+        items: zodToJsonSchema(def.type),
+      });
+
+    case 'ZodRecord':
+      return withDesc({
+        type: 'object',
+        additionalProperties: def.valueType ? zodToJsonSchema(def.valueType) : true,
+      });
+
+    case 'ZodUnion':
+      return withDesc({
+        anyOf: Array.isArray(def.options) ? def.options.map((opt: z.ZodTypeAny) => zodToJsonSchema(opt)) : [],
+      });
+
+    case 'ZodObject': {
+      const shapeFn = def.shape;
+      const shape: Record<string, z.ZodTypeAny> =
+        typeof shapeFn === 'function' ? shapeFn() : shapeFn && typeof shapeFn === 'object' ? shapeFn : {};
+      const properties: Record<string, unknown> = {};
+      const required: string[] = [];
+
+      for (const [key, fieldSchema] of Object.entries(shape)) {
+        properties[key] = zodToJsonSchema(fieldSchema);
+        const fieldType = (fieldSchema as unknown as { _def?: { typeName?: string } })._def?.typeName;
+        if (fieldType !== 'ZodOptional' && fieldType !== 'ZodDefault') {
+          required.push(key);
+        }
+      }
+
+      return withDesc({
+        type: 'object',
+        properties,
+        ...(required.length > 0 ? { required } : {}),
+      });
+    }
+
+    default:
+      return withDesc({ type: 'object', properties: {} });
+  }
+}
+
 export class CentauryRPC {
   private procedures = new Map<string, ProcedureDefinition>();
 
@@ -88,13 +190,14 @@ export class CentauryRPC {
   /**
    * Introspect registered procedures for MCP Tool definitions & client types
    */
-  public getMetadata(): Array<{ name: string; description?: string; hasInputSchema: boolean }> {
-    const meta = [];
+  public getMetadata(): ProcedureMetadata[] {
+    const meta: ProcedureMetadata[] = [];
     for (const [name, def] of this.procedures.entries()) {
       meta.push({
         name,
         description: def.description,
         hasInputSchema: !!def.inputSchema,
+        inputSchema: zodToJsonSchema(def.inputSchema),
       });
     }
     return meta;

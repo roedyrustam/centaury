@@ -32,8 +32,12 @@ export class CentauryAgentMemory {
   private tableName: string;
 
   constructor(options: AgentMemoryOptions = {}) {
+    const candidate = options.tableName ?? '_centaury_agent_turns';
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(candidate)) {
+      throw new Error(`AgentMemory: unsafe table name '${candidate}'`);
+    }
     this.db = options.db;
-    this.tableName = options.tableName ?? '_centaury_agent_turns';
+    this.tableName = candidate;
 
     if (this.db) {
       this.ensureDatabaseSchema();
@@ -154,7 +158,7 @@ export class CentauryAgentMemory {
       return history.slice(-limit);
     }
 
-    // Fallback to SQLite persistent storage
+    // Fallback to SQLite persistent storage (fetch latest N turns in chronological ASC order)
     if (this.db) {
       const stmt = this.db.prepare<{
         id: string;
@@ -165,10 +169,14 @@ export class CentauryAgentMemory {
         timestamp: number;
       }>(`
         SELECT id, sessionId, role, content, metadata, timestamp
-        FROM ${this.tableName}
-        WHERE sessionId = ?
-        ORDER BY timestamp ASC
-        LIMIT ?;
+        FROM (
+          SELECT rowid AS _rid, id, sessionId, role, content, metadata, timestamp
+          FROM ${this.tableName}
+          WHERE sessionId = ?
+          ORDER BY timestamp DESC, rowid DESC
+          LIMIT ?
+        )
+        ORDER BY timestamp ASC, _rid ASC;
       `);
 
       const rows = stmt.all(sessionId, limit);
@@ -186,7 +194,7 @@ export class CentauryAgentMemory {
   }
 
   /**
-   * Clear session history from memory and persistent store
+   * Clear session history from memory, SQLite turns table, and persistent vector store
    */
   public clearSession(sessionId: string): void {
     this.sessions.delete(sessionId);
@@ -194,6 +202,7 @@ export class CentauryAgentMemory {
     if (this.db) {
       const stmt = this.db.prepare(`DELETE FROM ${this.tableName} WHERE sessionId = ?;`);
       stmt.run(sessionId);
+      this.vectorStore?.deleteByCollection(`agent-turns:${sessionId}`);
     }
   }
 }

@@ -1,10 +1,10 @@
 # Product Requirements Document (PRD) — Centaury Framework
 **Project**: Centaury Framework (`@rudyrustam/centaury` / `@rudyrustam/core`)  
-**Version**: 1.1.0-alpha  
+**Version**: 1.2.0-alpha  
 **Status**: Approved  
 **Author**: Antigravity Principal Architect & Roedy Rustam  
 **Created**: 2026-10-07  
-**Last Updated**: 2026-11-15  
+**Last Updated**: 2026-11-21  
 
 ---
 

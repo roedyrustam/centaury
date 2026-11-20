@@ -4,6 +4,9 @@
  */
 
 import { describe, it, expect, afterAll } from 'bun:test';
+import { CentauryServer } from '@rudyrustam/core';
+import { CentauryMCPServer, mcpPlugin, selfHealingPlugin } from '@rudyrustam/agent';
+import { a2aPlugin } from '@rudyrustam/workflow';
 import { runCLI } from '../src/cli';
 import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
@@ -66,11 +69,36 @@ describe('@centaury/cli Developer Tools', () => {
       const pkg = JSON.parse(await Bun.file(join(agenticProject, 'package.json')).text());
       expect(pkg.dependencies['@rudyrustam/agent']).toBeDefined();
       expect(pkg.dependencies['@rudyrustam/astra']).toBeDefined();
+      expect(pkg.dependencies['@rudyrustam/auth']).toBeDefined();
+      expect(pkg.dependencies['@rudyrustam/workflow']).toBeDefined();
+      const serverTxt = await Bun.file(join(agenticProject, 'src', 'server.ts')).text();
+      expect(serverTxt).toContain('mcpPlugin');
+      expect(serverTxt).toContain('inputSchema:');
+      expect(serverTxt).not.toContain('handleRequest');
     } finally {
       if (existsSync(agenticProject)) {
         rmSync(agenticProject, { recursive: true, force: true });
       }
     }
+  });
+
+  it('runs centaury inspect against a live Centaury server and handles unreachable targets', async () => {
+    const server = new CentauryServer({ port: 0 });
+    const mcp = new CentauryMCPServer(server);
+    server.usePlugin(selfHealingPlugin());
+    server.usePlugin(mcpPlugin(mcp));
+    server.usePlugin(a2aPlugin({ name: 'Inspect Agent', description: 'CLI inspect test' }));
+    const listener = server.listen();
+
+    try {
+      const okCode = await runCLI(['inspect', `http://localhost:${listener.port}`]);
+      expect(okCode).toBe(0);
+    } finally {
+      server.stop();
+    }
+
+    const failCode = await runCLI(['inspect', 'http://localhost:59998']);
+    expect(failCode).toBe(1);
   });
 });
 

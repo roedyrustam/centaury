@@ -2,7 +2,7 @@
 **Framework Name**: Centaury (`@rudyrustam/centaury` / `@rudyrustam/core`)  
 **Tagline**: *The Autonomous Fullstack Engine for Super-Intelligent Systems*  
 **Document Status**: Official Architecture Specification (11-Package Monorepo)  
-**Version**: 1.1.0-alpha  
+**Version**: 1.2.0-alpha  
 
 ---
 
@@ -22,10 +22,12 @@ c:\centaury/
 ├── packages/
 │   ├── core/                  # Centaury Micro-Kernel (Bun HTTP/WS, Router, RPC)
 │   │   ├── src/
-│   │   │   ├── server.ts      # Ultra-fast Bun server with native WebSocket upgrade
+│   │   │   ├── server.ts      # Ultra-fast Bun server with native WebSocket upgrade & safe serveStatic
 │   │   │   ├── router.ts      # Trie-based route matcher & middleware pipeline
-│   │   │   ├── rpc.ts         # Type-safe RPC dispatcher without codegen
+│   │   │   ├── rpc.ts         # Type-safe RPC dispatcher & zodToJsonSchema MCP metadata
+│   │   │   ├── client.ts      # Lightweight browser/server RPC client (createRpcClient)
 │   │   │   ├── context.ts     # Request context, KV-cache prefix tracker
+│   │   │   ├── version.ts     # Single source of truth for CENTAURY_VERSION
 │   │   │   └── index.ts
 │   │   └── package.json
 │   ├── signals/               # Zero-Hydration Client Reactive Core (<1.5KB)
@@ -54,7 +56,8 @@ c:\centaury/
 │   │   │   ├── inspector.ts   # Live route & schema reflection
 │   │   │   ├── memory.ts      # Episodic vector memory connector
 │   │   │   ├── firewall.ts    # Prompt injection, SSRF & PII sanitization firewall
-│   │   │   ├── self-heal.ts   # Autonomous crash diagnostics & fallback recovery
+│   │   │   ├── self-heal.ts   # Autonomous crash diagnostics, workspace sourceContext & recovery
+│   │   │   ├── ai-gateway.ts  # Frontier AI Gateway (Gemini / OpenAI-compatible / Mock + fallback)
 │   │   │   └── index.ts
 │   │   └── package.json
 │   ├── sse/                   # Native Bun SSE Event Bus & Browser Client

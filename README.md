@@ -9,7 +9,7 @@
 
 [![GitHub Stars](https://img.shields.io/github/stars/roedyrustam/centaury?style=for-the-badge&logo=github&color=06b6d4)](https://github.com/roedyrustam/centaury/stargazers)
 [![CI Quality Gate](https://img.shields.io/github/actions/workflow/status/roedyrustam/centaury/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=CI%20Gate&color=10b981)](https://github.com/roedyrustam/centaury/actions)
-[![Tests Passing](https://img.shields.io/badge/tests-92%2F92%20passing-10b981.svg?style=for-the-badge&logo=bun)](https://github.com/roedyrustam/centaury)
+[![Tests Passing](https://img.shields.io/badge/tests-100%2F100%20passing-10b981.svg?style=for-the-badge&logo=bun)](https://github.com/roedyrustam/centaury)
 [![Runtime](https://img.shields.io/badge/Runtime-Bun%201.3%2B-f472b6.svg?style=for-the-badge&logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8%20Strict-3178c6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-v1.x%20Dual--Citizen-8b5cf6.svg?style=for-the-badge)](https://modelcontextprotocol.io/)
@@ -197,23 +197,25 @@ audio.onVoiceActivity((energy) => {
 const targetBox = vision.mapNormalizedToPixels({ ymin: 200, xmin: 150, ymax: 400, xmax: 600 }, 1920, 1080);
 ```
 
-### 5. `@rudyrustam/agent` — Dual-Citizen MCP v1.x, Prompt Firewall & Self-Healer
-Official Model Context Protocol server (`/.well-known/mcp.json`), runtime `CentauryPromptFirewall` (injection/SSRF/PII guard + `centaury_audit_prompt`), and autonomous `CentaurySelfHealer` + `selfHealingPlugin` (`/_heal/diagnostics`).
+### 5. `@rudyrustam/agent` — Dual-Citizen MCP v1.x, AI Gateway, Prompt Firewall & Self-Healer
+Official Model Context Protocol server (`/.well-known/mcp.json` + HTTP JSON-RPC `mcpPlugin('/mcp')`), `CentauryAIGateway` (Gemini/OpenAI-compatible/Mock with automatic fallback & KV-cache prefix hashing), runtime `CentauryPromptFirewall` (injection/SSRF/PII guard + `centaury_audit_prompt`), and source-aware `CentaurySelfHealer` + `selfHealingPlugin` (`/_heal/diagnostics`).
 
 ```ts
-import { CentauryMCPServer, CentauryPromptFirewall, selfHealingPlugin } from '@rudyrustam/agent';
+import { CentauryMCPServer, CentauryPromptFirewall, CentauryAIGateway, mcpPlugin, selfHealingPlugin } from '@rudyrustam/agent';
 
-app.usePlugin(selfHealingPlugin());
+app.usePlugin(selfHealingPlugin({ workspaceRoot: import.meta.dir }));
 const mcp = new CentauryMCPServer(app);
-const verdict = new CentauryPromptFirewall().inspectPrompt(userInput);
+app.usePlugin(mcpPlugin(mcp, { path: '/mcp' }));
+const gw = new CentauryAIGateway({ provider: { kind: 'gemini', model: 'gemini-2.5-pro' } });
 ```
 
 ### 6. `@rudyrustam/cli` — Developer Tooling
-Binary CLI `centaury` providing fast project scaffolding, local auto-reloading dev server, and diagnostic health audits.
+Binary CLI `centaury` providing fast project scaffolding, local auto-reloading dev server, live runtime inspection (`centaury inspect [url]`), and diagnostic health audits.
 
 ```bash
 bunx centaury create <app-name> [--template minimal|fullstack|agentic] [--install]
 bunx centaury dev
+bunx centaury inspect http://localhost:3000
 bunx centaury doctor
 ```
 
@@ -254,15 +256,16 @@ Run the automated benchmark suite locally:
 bun run bench
 ```
 
-### Verified Runtime Results (Bun v1.3.14 on x64):
+### Verified Runtime Results (Bun v1.4.2 on Windows x64):
 | Metric | Centaury Performance | Industry Comparison |
 | :--- | :--- | :--- |
-| **Micro-Signals Reactivity** | **18,923,624 ops/sec** | ~60x faster than React state hooks |
-| **Trie Router Throughput** | **10,588,935 matches/sec** | ~10x faster than Express / Fastify |
-| **Ephemeral AST Parser** | **286,650 parses/sec** | Instant sub-millisecond UI synthesis |
-| **Server Cold-Start** | **2.63 ms** | Zero compilation lag |
-| **Client Bundle Budget** | **< 1.5 KB entry** | ~98% smaller than Next.js hydration bundle |
-| **Memory Footprint (RSS)** | **< 125 MB** | Zero bloat, optimal cloud efficiency |
+| **Micro-Signals Reactivity** | **6,588,831 ops/sec** (`15.18 ms`) | Zero-hydration atomic DOM mutations |
+| **Trie Router Throughput** | **7,496,746 matches/sec** (`66.70 ms`) | Zero regex overhead dynamic routing |
+| **Ephemeral AST Parser** | **224,006 parses/sec** (`44.64 ms`) | Instant sub-millisecond UI synthesis |
+| **Vector Cosine Similarity** | **5,313,073 ops/sec** (`37.64 ms`) | 128-dim Float32Array SIMD-friendly search |
+| **SQLite Prepared Queries** | **1,257,805 queries/sec** (`39.75 ms`) | WAL mode + LRU statement cache |
+| **Client Bundle Budget** | **< 9 KB minified** | ~95% smaller than hydration runtimes |
+| **Memory Footprint (RSS)** | **56 MB** (`1 MB` heap) | Zero bloat, optimal cloud efficiency |
 
 ---
 
@@ -287,7 +290,7 @@ Navigate to **`http://localhost:3000`** to experience:
 Centaury enforces strict quality gates across all packages:
 
 ```bash
-# Run all 92 unit & integration tests
+# Run all 100 unit & integration tests
 bun test
 
 # Strict TypeScript typechecking (0 errors)
@@ -296,7 +299,7 @@ bun run typecheck
 # Full production build + .d.ts declarations
 bun run build
 
-# End-to-end user release check (scaffolding, boot, RPC, MCP)
+# End-to-end user release check (fullstack + agentic scaffolding, boot, RPC, MCP)
 bun run release:check
 ```
 

@@ -102,58 +102,126 @@ export class CentauryEphemeralElement extends SafeHTMLElement {
 /**
  * Built-in styling and registration for Ephemeral DSL components
  */
-export function registerEphemeralComponents(): void {
-  if (typeof customElements === 'undefined') return;
+export function registerEphemeralComponents(
+  registry?: CustomElementRegistry,
+  baseElement?: typeof HTMLElement
+): void {
+  const reg = registry ?? (typeof customElements !== 'undefined' ? customElements : undefined);
+  const BaseHTMLElement = baseElement ?? SafeHTMLElement;
+  if (!reg) return;
 
-  if (!customElements.get('c-ephemeral')) {
-    customElements.define('c-ephemeral', CentauryEphemeralElement);
+  if (!reg.get('c-ephemeral')) {
+    reg.define('c-ephemeral', CentauryEphemeralElement);
   }
 
-  // Register pre-styled ephemeral primitives
-  const defineTag = (tag: string, styles: string) => {
-    if (!customElements.get(tag)) {
-      class DynamicComponent extends HTMLElement {
+  // Register pre-styled ephemeral primitives with crisp 1px borders and attribute rendering
+  const defineStaticTag = (tag: string, styles: string) => {
+    if (!reg.get(tag)) {
+      class DynamicComponent extends BaseHTMLElement {
         connectedCallback() {
           if (!this.shadowRoot) {
             const shadow = this.attachShadow({ mode: 'open' });
-            shadow.innerHTML = `
-              <style>${styles}</style>
-              <slot></slot>
-            `;
+            shadow.innerHTML = `<style>${styles}</style><slot></slot>`;
           }
         }
       }
-      customElements.define(tag, DynamicComponent);
+      reg.define(tag, DynamicComponent);
     }
   };
 
-  defineTag(
+  defineStaticTag(
     'ui-card',
-    `:host { display: block; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; padding: 1.25rem; color: #f8fafc; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }`
+    `:host { display: block; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 1.25rem; color: #f8fafc; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }`
   );
 
-  defineTag(
-    'ui-header',
-    `:host { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 1.1rem; margin-bottom: 0.75rem; color: #38bdf8; }`
-  );
+  if (!reg.get('ui-header')) {
+    class UiHeaderComponent extends BaseHTMLElement {
+      static get observedAttributes() {
+        return ['title', 'badge'];
+      }
+      connectedCallback() {
+        this.renderHeader();
+      }
+      attributeChangedCallback() {
+        this.renderHeader();
+      }
+      private renderHeader() {
+        const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `<style>
+          :host { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; font-weight: 600; font-size: 1.05rem; margin-bottom: 0.75rem; color: #38bdf8; }
+          .badge { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.15rem 0.5rem; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #7dd3fc; }
+        </style>`;
+        const doc = this.ownerDocument;
+        const titleVal = this.getAttribute('title');
+        if (titleVal) {
+          const titleSpan = doc.createElement('span');
+          titleSpan.textContent = titleVal;
+          shadow.appendChild(titleSpan);
+        }
+        const slot = doc.createElement('slot');
+        shadow.appendChild(slot);
+        const badgeVal = this.getAttribute('badge');
+        if (badgeVal) {
+          const badgeSpan = doc.createElement('span');
+          badgeSpan.className = 'badge';
+          badgeSpan.textContent = badgeVal;
+          shadow.appendChild(badgeSpan);
+        }
+      }
+    }
+    reg.define('ui-header', UiHeaderComponent);
+  }
 
-  defineTag(
-    'ui-metric',
-    `:host { display: flex; align-items: baseline; gap: 0.5rem; font-size: 1.75rem; font-weight: 700; color: #ffffff; }`
-  );
+  if (!reg.get('ui-metric')) {
+    class UiMetricComponent extends BaseHTMLElement {
+      static get observedAttributes() {
+        return ['value', 'change', 'trend'];
+      }
+      connectedCallback() {
+        this.renderMetric();
+      }
+      attributeChangedCallback() {
+        this.renderMetric();
+      }
+      private renderMetric() {
+        const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
+        shadow.innerHTML = `<style>
+          :host { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; font-size: 1.6rem; font-weight: 700; color: #ffffff; font-variant-numeric: tabular-nums; margin-bottom: 0.5rem; }
+          .change { font-size: 0.8rem; font-weight: 600; color: #34d399; padding: 0.12rem 0.45rem; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
+        </style>`;
+        const doc = this.ownerDocument;
+        const val = this.getAttribute('value');
+        if (val) {
+          const valSpan = doc.createElement('span');
+          valSpan.textContent = val;
+          shadow.appendChild(valSpan);
+        }
+        const changeVal = this.getAttribute('change');
+        if (changeVal) {
+          const changeSpan = doc.createElement('span');
+          changeSpan.className = 'change';
+          changeSpan.textContent = changeVal;
+          shadow.appendChild(changeSpan);
+        }
+        const slot = doc.createElement('slot');
+        shadow.appendChild(slot);
+      }
+    }
+    reg.define('ui-metric', UiMetricComponent);
+  }
 
-  defineTag(
+  defineStaticTag(
     'ui-button',
-    `:host { display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0ea5e9, #6366f1); color: #fff; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 500; cursor: pointer; user-select: none; transition: transform 0.15s ease; } :host(:hover) { transform: scale(1.02); } :host(:active) { transform: scale(0.98); }`
+    `:host { display: inline-flex; align-items: center; justify-content: center; background: #0284c7; border: 1px solid #38bdf8; color: #ffffff; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; user-select: none; transition: background 0.15s ease, transform 0.12s ease; } :host(:hover) { background: #0369a1; } :host(:active) { transform: scale(0.98); }`
   );
 
-  defineTag(
+  defineStaticTag(
     'ui-badge',
-    `:host { display: inline-block; padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; border-radius: 9999px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }`
+    `:host { display: inline-block; padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; border-radius: 6px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }`
   );
 
-  defineTag(
+  defineStaticTag(
     'ui-alert',
-    `:host { display: block; padding: 0.75rem 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; font-size: 0.9rem; margin-top: 0.5rem; }`
+    `:host { display: block; padding: 0.75rem 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #fecaca; font-size: 0.875rem; margin-top: 0.5rem; }`
   );
 }

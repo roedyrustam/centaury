@@ -35,6 +35,12 @@ describe('@rudyrustam/auth Security, Passkeys & Legal Compliance', () => {
     const expiredResult = await verifyToken(expired, SECRET);
     expect(expiredResult.valid).toBe(false);
     expect(expiredResult.error).toContain('expired');
+
+    const badAlgHeader = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
+    const [, p, s] = token.split('.');
+    const badAlgRes = await verifyToken(`${badAlgHeader}.${p}.${s}`, SECRET);
+    expect(badAlgRes.valid).toBe(false);
+    expect(badAlgRes.error).toContain('algorithm');
   });
 
   it('hashes and verifies passwords securely with salted PBKDF2-SHA256', async () => {
@@ -95,22 +101,34 @@ describe('@rudyrustam/auth Security, Passkeys & Legal Compliance', () => {
     }
   });
 
-  it('issues and verifies single-use WebAuthn Passkey registration and authentication challenges', () => {
-    const passkeys = new CentauryPasskeyManager({ rpId: 'centaury.dev', rpName: 'Centaury' });
+  it('issues and verifies single-use WebAuthn Passkey challenges with origin allowlist and TTL pruning', () => {
+    const passkeys = new CentauryPasskeyManager({
+      rpId: 'centaury.dev',
+      rpName: 'Centaury',
+      expectedOrigins: ['https://centaury.dev'],
+    });
     const reg = passkeys.createRegistrationChallenge('usr-99', 'roedy@centaury.dev');
 
+    const wrongOrigin = passkeys.verifyChallenge(
+      reg.challengeId,
+      JSON.stringify({ type: 'webauthn.create', challenge: reg.challenge, origin: 'https://evil.example' })
+    );
+    expect(wrongOrigin.verified).toBe(false);
+    expect(wrongOrigin.error).toContain('Unexpected origin');
+
+    const reg2 = passkeys.createRegistrationChallenge('usr-99', 'roedy@centaury.dev');
     const clientData = JSON.stringify({
       type: 'webauthn.create',
-      challenge: reg.challenge,
+      challenge: reg2.challenge,
       origin: 'https://centaury.dev',
     });
 
-    const firstVerify = passkeys.verifyChallenge(reg.challengeId, clientData);
+    const firstVerify = passkeys.verifyChallenge(reg2.challengeId, clientData);
     expect(firstVerify.verified).toBe(true);
     expect(firstVerify.userId).toBe('usr-99');
 
     // Replay with the same challengeId must be rejected
-    const replay = passkeys.verifyChallenge(reg.challengeId, clientData);
+    const replay = passkeys.verifyChallenge(reg2.challengeId, clientData);
     expect(replay.verified).toBe(false);
 
     const auth = passkeys.createAuthenticationChallenge('usr-99');
@@ -122,6 +140,7 @@ describe('@rudyrustam/auth Security, Passkeys & Legal Compliance', () => {
       })
     ).toString('base64url');
     expect(passkeys.verifyChallenge(auth.challengeId, authPayload).verified).toBe(true);
+    expect(passkeys.pruneExpiredChallenges(Date.now() + 999_999)).toBe(0);
   });
 
   it('serves the mandatory Legal & Privacy Trio and processes account deletion requests', async () => {
@@ -129,7 +148,7 @@ describe('@rudyrustam/auth Security, Passkeys & Legal Compliance', () => {
     const server = new CentauryServer({ port: 0 });
     server.usePlugin(
       legalCompliancePlugin({
-        appName: 'Centaury Demo',
+        appName: 'Centaury <Demo>',
         contactEmail: 'dpo@centaury.dev',
         onDeleteUser: async (payload) => {
           deletedUsers.push(payload.userId || payload.email || 'unknown');
@@ -141,7 +160,10 @@ describe('@rudyrustam/auth Security, Passkeys & Legal Compliance', () => {
     try {
       const privacyRes = await fetch(`http://localhost:${listener.port}/privacy`);
       expect(privacyRes.status).toBe(200);
-      expect(await privacyRes.text()).toContain('UU PDP');
+      const privacyHtml = await privacyRes.text();
+      expect(privacyHtml).toContain('UU PDP');
+      expect(privacyHtml).toContain('Centaury &lt;Demo&gt;');
+      expect(privacyHtml).not.toContain('Centaury <Demo>');
 
       const termsRes = await fetch(`http://localhost:${listener.port}/terms`);
       expect(termsRes.status).toBe(200);

@@ -34,6 +34,15 @@ const COMPLIANCE_STANDARDS = [
   'GooglePlay-DataSafety',
 ] as const;
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function wantsJson(ctx: CentauryContext): boolean {
   const format = ctx.url.searchParams.get('format');
   const accept = ctx.headers.get('accept') || '';
@@ -41,12 +50,14 @@ function wantsJson(ctx: CentauryContext): boolean {
 }
 
 function renderDocumentHtml(title: string, appName: string, bodyHtml: string): Response {
+  const safeTitle = escapeHtml(title);
+  const safeAppName = escapeHtml(appName);
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${title} — ${appName}</title>
+  <title>${safeTitle} — ${safeAppName}</title>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; max-width: 760px; margin: 2.5rem auto; padding: 0 1.25rem; line-height: 1.6; color: #0f172a; background: #f8fafc; }
     main { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 2rem; }
@@ -61,7 +72,7 @@ function renderDocumentHtml(title: string, appName: string, bodyHtml: string): R
 </head>
 <body>
   <main>
-    <h1>${title}</h1>
+    <h1>${safeTitle}</h1>
     ${bodyHtml}
   </main>
 </body>
@@ -93,9 +104,14 @@ export function legalCompliancePlugin(options: LegalComplianceOptions = {}): Cen
   const jurisdiction = options.jurisdiction ?? 'Republic of Indonesia (UU PDP No. 27/2022) & GDPR';
   const auditTrail: DeletionAuditRecord[] = [];
 
+  const safeApp = escapeHtml(appName);
+  const safeCompany = escapeHtml(companyName);
+  const safeEmail = escapeHtml(contactEmail);
+  const safeJurisdiction = escapeHtml(jurisdiction);
+
   return {
     name: 'centaury:legal-compliance',
-    version: '1.1.0',
+    version: '1.2.0',
     install(server) {
       const privacyHandler: RouteHandler = (ctx) => {
         const doc = {
@@ -115,10 +131,10 @@ export function legalCompliancePlugin(options: LegalComplianceOptions = {}): Cen
         return renderDocumentHtml(
           doc.title,
           appName,
-          `<p class="meta">Controller: <strong>${companyName}</strong> | Contact: <code>${contactEmail}</code></p>
-           <h2>1. Data Collected & Purpose</h2>
-           <p>${appName} processes only strictly necessary authentication, session, and operational records required to deliver core functionality.</p>
-           <h2>2. User Rights & Data Erasure</h2>
+          `<p class="meta">Controller: <strong>${safeCompany}</strong> | Contact: <code>${safeEmail}</code></p>
+           <h2>1. Data Collected &amp; Purpose</h2>
+           <p>${safeApp} processes only strictly necessary authentication, session, and operational records required to deliver core functionality.</p>
+           <h2>2. User Rights &amp; Data Erasure</h2>
            <p>You may request permanent deletion of your account and personal records at any time via <a href="/delete-account">/delete-account</a> or <code>POST /api/compliance/delete-account</code> in accordance with UU PDP No. 27/2022 &amp; GDPR Art. 13/17.</p>
            <p class="meta">Standards: ${COMPLIANCE_STANDARDS.join(', ')}</p>`
         );
@@ -137,11 +153,11 @@ export function legalCompliancePlugin(options: LegalComplianceOptions = {}): Cen
         return renderDocumentHtml(
           doc.title,
           appName,
-          `<p class="meta">Operator: <strong>${companyName}</strong> | Governing Law: ${jurisdiction}</p>
+          `<p class="meta">Operator: <strong>${safeCompany}</strong> | Governing Law: ${safeJurisdiction}</p>
            <h2>1. Acceptable Use</h2>
-           <p>Users and autonomous agents integrating with ${appName} agree to abide by rate limits, authentication safeguards, and applicable laws.</p>
-           <h2>2. Termination & Account Deletion</h2>
-           <p>Access may be terminated at user request using <a href="/delete-account">/delete-account</a>. Support contact: <code>${contactEmail}</code>.</p>`
+           <p>Users and autonomous agents integrating with ${safeApp} agree to abide by rate limits, authentication safeguards, and applicable laws.</p>
+           <h2>2. Termination &amp; Account Deletion</h2>
+           <p>Access may be terminated at user request using <a href="/delete-account">/delete-account</a>. Support contact: <code>${safeEmail}</code>.</p>`
         );
       };
 

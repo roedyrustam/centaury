@@ -1,6 +1,6 @@
 {
   "name": "@rudyrustam/auth",
-  "version": "1.1.0-alpha",
+  "version": "1.2.0-alpha",
   "description": "Zero-Trust Authentication, Web Crypto JWT, PBKDF2, RBAC/ReBAC, WebAuthn Passkeys, and Legal Compliance Plugin for Centaury Framework",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

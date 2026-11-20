@@ -85,6 +85,8 @@ export function deserializeVector(bytes: Uint8Array | ArrayBuffer): Float32Array
   return new Float32Array(bytes);
 }
 
+const SAFE_VECTOR_TABLE_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
 /**
  * CentauryVectorStore: High-performance SQLite-backed vector storage with cosine search
  */
@@ -93,6 +95,9 @@ export class CentauryVectorStore {
   private tableName: string;
 
   constructor(db: CentauryDatabase, tableName = '_centaury_vectors') {
+    if (!SAFE_VECTOR_TABLE_REGEX.test(tableName)) {
+      throw new Error(`VectorStore: unsafe table name '${tableName}'`);
+    }
     this.db = db;
     this.tableName = tableName;
     this.ensureVectorTable();
@@ -191,6 +196,15 @@ export class CentauryVectorStore {
     const stmt = this.db.prepare(`DELETE FROM ${this.tableName} WHERE id = ?;`);
     const res = stmt.run(id);
     return res.changes > 0;
+  }
+
+  /**
+   * Delete all vectors belonging to a collection
+   */
+  public deleteByCollection(collection: string): number {
+    const stmt = this.db.prepare(`DELETE FROM ${this.tableName} WHERE collection = ?;`);
+    const res = stmt.run(collection);
+    return res.changes;
   }
 
   /**
